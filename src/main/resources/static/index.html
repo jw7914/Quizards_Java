@@ -1,99 +1,13 @@
 <!doctype html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quizards</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    <style>
-        body {
-            background:
-                radial-gradient(circle at top left, rgba(13, 110, 253, 0.18), transparent 30%),
-                radial-gradient(circle at bottom right, rgba(25, 135, 84, 0.14), transparent 24%),
-                linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
-            min-height: 100vh;
-        }
-
-        .hero-shell {
-            background: rgba(255, 255, 255, 0.78);
-            backdrop-filter: blur(14px);
-        }
-    </style>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg bg-white border-bottom">
-    <div class="container">
-        <a class="navbar-brand fw-semibold" href="/">Quizards</a>
-        <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary" href="/auth.html">Login / Register</a>
-            <a class="btn btn-outline-secondary" href="/library.html">My Study Sets</a>
-            <a class="btn btn-primary" href="/create.html">Create</a>
-        </div>
-    </div>
-</nav>
-
-<main class="container py-5">
-    <section class="hero-shell rounded-5 shadow-lg p-4 p-md-5 mb-4">
-        <div class="row align-items-center g-4">
-            <div class="col-lg-7">
-                <span class="badge text-bg-primary-subtle text-primary-emphasis mb-3">AI Study Workflow</span>
-                <h1 class="display-4 fw-bold mb-3">Turn notes into flashcards, review them, then save them to your account.</h1>
-                <p class="lead text-secondary mb-4">Quizards combines Spring Boot, Supabase-backed login, and Gemini generation into one study flow. Draft first. Edit what the AI gives you. Save only the deck you actually want.</p>
-                <div class="d-flex flex-wrap gap-3">
-                    <a class="btn btn-primary btn-lg" href="/create.html">Start Creating</a>
-                    <a class="btn btn-outline-dark btn-lg" href="/auth.html">Sign In</a>
-                </div>
-            </div>
-            <div class="col-lg-5">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <h2 class="h4 mb-3">How it works</h2>
-                        <div class="d-grid gap-3">
-                            <div>
-                                <div class="fw-semibold">1. Register or log in</div>
-                                <div class="text-secondary">Create a session tied to your saved study sets.</div>
-                            </div>
-                            <div>
-                                <div class="fw-semibold">2. Generate a draft</div>
-                                <div class="text-secondary">Chat with Gemini to produce a deck from notes or a topic prompt.</div>
-                            </div>
-                            <div>
-                                <div class="fw-semibold">3. Review before saving</div>
-                                <div class="text-secondary">Edit flashcards and only persist the final version to your account.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="row g-4">
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <h2 class="h5">Session-backed accounts</h2>
-                    <p class="text-secondary mb-0">Your login/register flow lives in the Spring Boot app and persists users in Postgres.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <h2 class="h5">Draft before commit</h2>
-                    <p class="text-secondary mb-0">AI generation now returns a draft deck first so you can review and edit before saving.</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <h2 class="h5">Personal library</h2>
-                    <p class="text-secondary mb-0">Saved study sets are owned by the authenticated user instead of a placeholder account.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-</main>
-</body>
-</html>
+    <script type="module" crossorigin src="/assets/index-DHfBq01Y.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BRM915bF.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+  </html>

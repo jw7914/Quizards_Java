@@ -26,9 +26,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/auth.html", "/create.html", "/library.html", "/study-set.html", "/api/auth/**").permitAll()
+                        .requestMatchers("/", "/auth", "/login", "/register", "/create", "/library", "/study-set/**", "/index.html", "/api/auth/**").permitAll()
                         .requestMatchers("/api/study-sets").permitAll()
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                        .requestMatchers("/assets/**", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
