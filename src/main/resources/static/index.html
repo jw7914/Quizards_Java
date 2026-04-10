@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quizards</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top, rgba(13, 110, 253, 0.12), transparent 30%),
+                linear-gradient(180deg, #f8f9fa 0%, #eef2f7 100%);
+            min-height: 100vh;
+        }
+
+        .hero-card {
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hero-card::after {
+            content: "";
+            position: absolute;
+            inset: auto -15% -35% auto;
+            width: 260px;
+            height: 260px;
+            border-radius: 50%;
+            background: rgba(13, 110, 253, 0.08);
+        }
+
+        .deck-item + .deck-item {
+            margin-top: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+    <div class="container">
+        <span class="navbar-brand fw-semibold">Quizards</span>
+        <span class="navbar-text text-body-secondary">Spring Boot browser demo</span>
+    </div>
+</nav>
+
+<main class="container py-5">
+    <section class="card border-0 shadow-lg hero-card mb-4">
+        <div class="card-body p-4 p-md-5">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    <span class="badge text-bg-primary-subtle text-primary-emphasis mb-3">Browser-ready UI</span>
+                    <h1 class="display-5 fw-bold mb-3">Study sets, now with a real web front end.</h1>
+                    <p class="lead text-body-secondary mb-4">This page is served by your Spring Boot app, styled with Bootstrap 5.3, and connected to the same Quizards API you already had in Java.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge rounded-pill text-bg-light border">`/` landing page</span>
+                        <span class="badge rounded-pill text-bg-light border">`/api/study-sets` data</span>
+                        <span class="badge rounded-pill text-bg-light border">responsive layout</span>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="card bg-primary text-white shadow-sm">
+                        <div class="card-body">
+                            <p class="text-uppercase small mb-2">What this proves</p>
+                            <ul class="mb-0">
+                                <li>The project starts as an HTTP app.</li>
+                                <li>The browser has an actual home page.</li>
+                                <li>New study sets can be created live.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-4">
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Create a Study Set</h2>
+                            <p class="text-body-secondary mb-0">Post directly to the Spring controller.</p>
+                        </div>
+                        <span class="badge text-bg-dark">POST</span>
+                    </div>
+
+                    <form id="study-set-form" class="row g-3">
+                        <div class="col-12">
+                            <label for="title" class="form-label">Title</label>
+                            <input id="title" name="title" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea id="description" name="description" class="form-control" rows="5" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="visibility" class="form-label">Visibility</label>
+                            <select id="visibility" name="visibility" class="form-select">
+                                <option value="PRIVATE">Private</option>
+                                <option value="PUBLIC">Public</option>
+                            </select>
+                        </div>
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Create Study Set</button>
+                        </div>
+                    </form>
+
+                    <div id="form-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Generate With Gemini</h2>
+                            <p class="text-body-secondary mb-0">Paste notes, a topic, or a study request.</p>
+                        </div>
+                        <span class="badge text-bg-primary">AI</span>
+                    </div>
+
+                    <form id="ai-form" class="row g-3">
+                        <div class="col-12">
+                            <label for="ai-prompt" class="form-label">Notes or Prompt</label>
+                            <textarea id="ai-prompt" name="prompt" class="form-control" rows="8" placeholder="Example: Generate a biology deck covering cellular respiration, ATP, glycolysis, Krebs cycle, and electron transport chain." required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="ai-visibility" class="form-label">Visibility</label>
+                            <select id="ai-visibility" name="visibility" class="form-select">
+                                <option value="PRIVATE">Private</option>
+                                <option value="PUBLIC">Public</option>
+                            </select>
+                        </div>
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-dark btn-lg">Generate Study Set</button>
+                        </div>
+                    </form>
+
+                    <div id="ai-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Public Study Sets</h2>
+                            <p class="text-body-secondary mb-0">Loaded from the in-memory service layer.</p>
+                        </div>
+                        <button id="refresh-button" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
+                    </div>
+
+                    <div id="loading-state" class="text-body-secondary small mb-3">Loading from <code>/api/study-sets</code>...</div>
+                    <div id="study-set-list" class="deck-list"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const list = document.getElementById("study-set-list");
+    const form = document.getElementById("study-set-form");
+    const aiForm = document.getElementById("ai-form");
+    const formStatus = document.getElementById("form-status");
+    const aiStatus = document.getElementById("ai-status");
+    const loadingState = document.getElementById("loading-state");
+    const refreshButton = document.getElementById("refresh-button");
+
+    function showStatus(element, message, tone) {
+        element.className = `alert mt-3 mb-0 alert-${tone}`;
+        element.textContent = message;
+    }
+
+    function renderStudySets(studySets) {
+        list.innerHTML = "";
+
+        if (studySets.length === 0) {
+            list.innerHTML = `
+                <div class="alert alert-light border mb-0">
+                    No study sets yet.
+                </div>
+            `;
+            return;
+        }
+
+        studySets.forEach((studySet) => {
+            const item = document.createElement("article");
+            item.className = "deck-item card border";
+            item.innerHTML = `
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <h3 class="h5 mb-1">${studySet.title}</h3>
+                            <p class="text-body-secondary mb-2">${studySet.description}</p>
+                        </div>
+                        <span class="badge text-bg-${studySet.visibility === "PUBLIC" ? "success" : "secondary"}">${studySet.visibility}</span>
+                    </div>
+                    <div class="small text-body-secondary">ID: ${studySet.id}</div>
+                    <div class="small text-body-secondary mt-1">${studySet.cards.length} flashcard${studySet.cards.length === 1 ? "" : "s"}</div>
+                </div>
+            `;
+            list.appendChild(item);
+        });
+    }
+
+    async function loadStudySets() {
+        loadingState.textContent = "Loading from /api/study-sets...";
+        const response = await fetch("/api/study-sets");
+
+        if (!response.ok) {
+            throw new Error("Unable to load study sets.");
+        }
+
+        const studySets = await response.json();
+        renderStudySets(studySets);
+        loadingState.textContent = `${studySets.length} study set${studySets.length === 1 ? "" : "s"} loaded.`;
+    }
+
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showStatus(formStatus, "Saving study set...", "secondary");
+
+        const payload = {
+            title: form.title.value,
+            description: form.description.value,
+            visibility: form.visibility.value
+        };
+
+        const response = await fetch("/api/study-sets", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            showStatus(formStatus, "Unable to create the study set.", "danger");
+            return;
+        }
+
+        form.reset();
+        showStatus(formStatus, "Study set created.", "success");
+        await loadStudySets();
+    });
+
+    aiForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showStatus(aiStatus, "Generating study set with Gemini...", "secondary");
+
+        const payload = {
+            prompt: aiForm.prompt.value,
+            visibility: aiForm.visibility.value
+        };
+
+        const response = await fetch("/api/ai/generate-study-set", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            showStatus(aiStatus, "Gemini could not generate the study set. Check the server configuration and API key.", "danger");
+            return;
+        }
+
+        aiForm.reset();
+        showStatus(aiStatus, "AI study set created.", "success");
+        await loadStudySets();
+    });
+
+    refreshButton.addEventListener("click", () => {
+        loadStudySets().catch(() => {
+            loadingState.textContent = "Unable to load study sets.";
+        });
+    });
+
+    loadStudySets().catch(() => {
+        list.innerHTML = `
+            <div class="alert alert-danger mb-0">
+                Unable to load study sets.
+            </div>
+        `;
+        loadingState.textContent = "The API did not respond.";
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</body>
+</html>
