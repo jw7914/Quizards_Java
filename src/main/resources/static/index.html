@@ -8,466 +8,92 @@
     <style>
         body {
             background:
-                radial-gradient(circle at top, rgba(13, 110, 253, 0.12), transparent 30%),
-                linear-gradient(180deg, #f8f9fa 0%, #eef2f7 100%);
+                radial-gradient(circle at top left, rgba(13, 110, 253, 0.18), transparent 30%),
+                radial-gradient(circle at bottom right, rgba(25, 135, 84, 0.14), transparent 24%),
+                linear-gradient(180deg, #f8fafc 0%, #eef3f8 100%);
             min-height: 100vh;
         }
 
-        .hero-card {
-            overflow: hidden;
-            position: relative;
-        }
-
-        .hero-card::after {
-            content: "";
-            position: absolute;
-            inset: auto -15% -35% auto;
-            width: 260px;
-            height: 260px;
-            border-radius: 50%;
-            background: rgba(13, 110, 253, 0.08);
-        }
-
-        .deck-item + .deck-item {
-            margin-top: 0.75rem;
+        .hero-shell {
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(14px);
         }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
+<nav class="navbar navbar-expand-lg bg-white border-bottom">
     <div class="container">
-        <span class="navbar-brand fw-semibold">Quizards</span>
-        <span class="navbar-text text-body-secondary">Spring Boot + Supabase login + AI study sets</span>
+        <a class="navbar-brand fw-semibold" href="/">Quizards</a>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="/auth.html">Login / Register</a>
+            <a class="btn btn-outline-secondary" href="/library.html">My Study Sets</a>
+            <a class="btn btn-primary" href="/create.html">Create</a>
+        </div>
     </div>
 </nav>
 
 <main class="container py-5">
-    <section class="card border-0 shadow-lg hero-card mb-4">
-        <div class="card-body p-4 p-md-5">
-            <div class="row align-items-center g-4">
-                <div class="col-lg-8">
-                    <span class="badge text-bg-primary-subtle text-primary-emphasis mb-3">Logged-in study flow</span>
-                    <h1 class="display-5 fw-bold mb-3">Register, sign in, generate AI decks, and save them to your account.</h1>
-                    <p class="lead text-body-secondary mb-0">Your Spring Boot app now owns the auth flow and stores study sets in Postgres. AI-generated decks are saved under the logged-in user instead of a temporary demo profile.</p>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card bg-primary text-white shadow-sm">
-                        <div class="card-body">
-                            <p class="text-uppercase small mb-2">Current session</p>
-                            <div id="session-summary" class="fw-semibold">Checking login status...</div>
-                            <button id="logout-button" class="btn btn-light btn-sm mt-3 d-none" type="button">Log out</button>
-                        </div>
-                    </div>
+    <section class="hero-shell rounded-5 shadow-lg p-4 p-md-5 mb-4">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="badge text-bg-primary-subtle text-primary-emphasis mb-3">AI Study Workflow</span>
+                <h1 class="display-4 fw-bold mb-3">Turn notes into flashcards, review them, then save them to your account.</h1>
+                <p class="lead text-secondary mb-4">Quizards combines Spring Boot, Supabase-backed login, and Gemini generation into one study flow. Draft first. Edit what the AI gives you. Save only the deck you actually want.</p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a class="btn btn-primary btn-lg" href="/create.html">Start Creating</a>
+                    <a class="btn btn-outline-dark btn-lg" href="/auth.html">Sign In</a>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <section class="row g-4 mb-4">
-        <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">Register</h2>
-                            <p class="text-body-secondary mb-0">Create an account stored in your Supabase Postgres database.</p>
+            <div class="col-lg-5">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h4 mb-3">How it works</h2>
+                        <div class="d-grid gap-3">
+                            <div>
+                                <div class="fw-semibold">1. Register or log in</div>
+                                <div class="text-secondary">Create a session tied to your saved study sets.</div>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">2. Generate a draft</div>
+                                <div class="text-secondary">Chat with Gemini to produce a deck from notes or a topic prompt.</div>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">3. Review before saving</div>
+                                <div class="text-secondary">Edit flashcards and only persist the final version to your account.</div>
+                            </div>
                         </div>
-                        <span class="badge text-bg-success">New User</span>
                     </div>
-
-                    <form id="register-form" class="row g-3">
-                        <div class="col-12">
-                            <label for="register-username" class="form-label">Username</label>
-                            <input id="register-username" name="username" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label for="register-password" class="form-label">Password</label>
-                            <input id="register-password" name="password" type="password" class="form-control" minlength="8" required>
-                        </div>
-                        <div class="col-12 d-grid">
-                            <button type="submit" class="btn btn-success btn-lg">Create Account</button>
-                        </div>
-                    </form>
-                    <div id="register-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-xl-6">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">Log In</h2>
-                            <p class="text-body-secondary mb-0">Use your app account to save generated study sets to your profile.</p>
-                        </div>
-                        <span class="badge text-bg-dark">Session</span>
-                    </div>
-
-                    <form id="login-form" class="row g-3">
-                        <div class="col-12">
-                            <label for="login-username" class="form-label">Username</label>
-                            <input id="login-username" name="username" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label for="login-password" class="form-label">Password</label>
-                            <input id="login-password" name="password" type="password" class="form-control" required>
-                        </div>
-                        <div class="col-12 d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Log In</button>
-                        </div>
-                    </form>
-                    <div id="login-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
                 </div>
             </div>
         </div>
     </section>
 
     <section class="row g-4">
-        <div class="col-12 col-xl-4">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">Create a Study Set</h2>
-                            <p class="text-body-secondary mb-0">Requires login. Saved to your account.</p>
-                        </div>
-                        <span class="badge text-bg-dark">POST</span>
-                    </div>
-
-                    <form id="study-set-form" class="row g-3">
-                        <div class="col-12">
-                            <label for="title" class="form-label">Title</label>
-                            <input id="title" name="title" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label for="description" class="form-label">Description</label>
-                            <textarea id="description" name="description" class="form-control" rows="5" required></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label for="visibility" class="form-label">Visibility</label>
-                            <select id="visibility" name="visibility" class="form-select">
-                                <option value="PRIVATE">Private</option>
-                                <option value="PUBLIC">Public</option>
-                            </select>
-                        </div>
-                        <div class="col-12 d-grid">
-                            <button type="submit" class="btn btn-outline-primary btn-lg">Save Study Set</button>
-                        </div>
-                    </form>
-                    <div id="form-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
+                    <h2 class="h5">Session-backed accounts</h2>
+                    <p class="text-secondary mb-0">Your login/register flow lives in the Spring Boot app and persists users in Postgres.</p>
                 </div>
             </div>
         </div>
-
-        <div class="col-12 col-xl-4">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">Generate With Gemini</h2>
-                            <p class="text-body-secondary mb-0">AI-created decks are saved to the logged-in user.</p>
-                        </div>
-                        <span class="badge text-bg-primary">AI</span>
-                    </div>
-
-                    <form id="ai-form" class="row g-3">
-                        <div class="col-12">
-                            <label for="ai-prompt" class="form-label">Notes or Prompt</label>
-                            <textarea id="ai-prompt" name="prompt" class="form-control" rows="8" placeholder="Example: Generate a biology deck covering cellular respiration, ATP, glycolysis, Krebs cycle, and electron transport chain." required></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label for="ai-visibility" class="form-label">Visibility</label>
-                            <select id="ai-visibility" name="visibility" class="form-select">
-                                <option value="PRIVATE">Private</option>
-                                <option value="PUBLIC">Public</option>
-                            </select>
-                        </div>
-                        <div class="col-12 d-grid">
-                            <button type="submit" class="btn btn-dark btn-lg">Generate and Save</button>
-                        </div>
-                    </form>
-                    <div id="ai-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
+                    <h2 class="h5">Draft before commit</h2>
+                    <p class="text-secondary mb-0">AI generation now returns a draft deck first so you can review and edit before saving.</p>
                 </div>
             </div>
         </div>
-
-        <div class="col-12 col-xl-4">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">Your Study Sets</h2>
-                            <p class="text-body-secondary mb-0">Visible after login.</p>
-                        </div>
-                        <button id="my-refresh-button" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
-                    </div>
-
-                    <div id="my-loading-state" class="text-body-secondary small mb-3">Log in to load your saved study sets.</div>
-                    <div id="my-study-set-list" class="deck-list"></div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="row g-4 mt-1">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                            <h2 class="h4 mb-1">Public Study Sets</h2>
-                            <p class="text-body-secondary mb-0">Available to everyone.</p>
-                        </div>
-                        <button id="public-refresh-button" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
-                    </div>
-
-                    <div id="public-loading-state" class="text-body-secondary small mb-3">Loading from <code>/api/study-sets</code>...</div>
-                    <div id="public-study-set-list" class="deck-list"></div>
+                    <h2 class="h5">Personal library</h2>
+                    <p class="text-secondary mb-0">Saved study sets are owned by the authenticated user instead of a placeholder account.</p>
                 </div>
             </div>
         </div>
     </section>
 </main>
-
-<script>
-    const registerForm = document.getElementById("register-form");
-    const loginForm = document.getElementById("login-form");
-    const studySetForm = document.getElementById("study-set-form");
-    const aiForm = document.getElementById("ai-form");
-
-    const registerStatus = document.getElementById("register-status");
-    const loginStatus = document.getElementById("login-status");
-    const formStatus = document.getElementById("form-status");
-    const aiStatus = document.getElementById("ai-status");
-    const sessionSummary = document.getElementById("session-summary");
-    const logoutButton = document.getElementById("logout-button");
-
-    const myStudySetList = document.getElementById("my-study-set-list");
-    const publicStudySetList = document.getElementById("public-study-set-list");
-    const myLoadingState = document.getElementById("my-loading-state");
-    const publicLoadingState = document.getElementById("public-loading-state");
-    const myRefreshButton = document.getElementById("my-refresh-button");
-    const publicRefreshButton = document.getElementById("public-refresh-button");
-
-    let currentUser = null;
-
-    function showStatus(element, message, tone) {
-        element.className = `alert mt-3 mb-0 alert-${tone}`;
-        element.textContent = message;
-    }
-
-    function renderStudySets(listElement, studySets, emptyMessage) {
-        listElement.innerHTML = "";
-
-        if (studySets.length === 0) {
-            listElement.innerHTML = `
-                <div class="alert alert-light border mb-0">${emptyMessage}</div>
-            `;
-            return;
-        }
-
-        studySets.forEach((studySet) => {
-            const item = document.createElement("article");
-            item.className = "deck-item card border";
-            item.innerHTML = `
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start gap-3">
-                        <div>
-                            <h3 class="h5 mb-1">${studySet.title}</h3>
-                            <p class="text-body-secondary mb-2">${studySet.description}</p>
-                        </div>
-                        <span class="badge text-bg-${studySet.visibility === "PUBLIC" ? "success" : "secondary"}">${studySet.visibility}</span>
-                    </div>
-                    <div class="small text-body-secondary">ID: ${studySet.id}</div>
-                    <div class="small text-body-secondary mt-1">${studySet.flashcardCount} flashcard${studySet.flashcardCount === 1 ? "" : "s"}</div>
-                    ${studySet.ownerUsername ? `<div class="small text-body-secondary mt-1">Owner: ${studySet.ownerUsername}</div>` : ""}
-                </div>
-            `;
-            listElement.appendChild(item);
-        });
-    }
-
-    async function fetchJson(url, options = {}) {
-        const response = await fetch(url, {
-            headers: {
-                "Content-Type": "application/json",
-                ...(options.headers || {})
-            },
-            ...options
-        });
-
-        let body = null;
-        const contentType = response.headers.get("content-type") || "";
-        if (contentType.includes("application/json")) {
-            body = await response.json();
-        }
-
-        if (!response.ok) {
-            throw new Error(body?.error || "Request failed.");
-        }
-
-        return body;
-    }
-
-    async function refreshAuthState() {
-        const me = await fetchJson("/api/auth/me");
-        currentUser = me.authenticated ? me : null;
-
-        if (currentUser) {
-            sessionSummary.textContent = `Logged in as ${currentUser.username}`;
-            logoutButton.classList.remove("d-none");
-        } else {
-            sessionSummary.textContent = "Not logged in";
-            logoutButton.classList.add("d-none");
-        }
-    }
-
-    async function loadPublicStudySets() {
-        publicLoadingState.textContent = "Loading from /api/study-sets...";
-        const studySets = await fetchJson("/api/study-sets");
-        renderStudySets(publicStudySetList, studySets, "No public study sets yet.");
-        publicLoadingState.textContent = `${studySets.length} public study set${studySets.length === 1 ? "" : "s"} loaded.`;
-    }
-
-    async function loadMyStudySets() {
-        if (!currentUser) {
-            myStudySetList.innerHTML = "";
-            myLoadingState.textContent = "Log in to load your saved study sets.";
-            return;
-        }
-
-        myLoadingState.textContent = "Loading your study sets...";
-        const studySets = await fetchJson("/api/my/study-sets");
-        renderStudySets(myStudySetList, studySets, "You have not saved any study sets yet.");
-        myLoadingState.textContent = `${studySets.length} personal study set${studySets.length === 1 ? "" : "s"} loaded.`;
-    }
-
-    registerForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        showStatus(registerStatus, "Creating account...", "secondary");
-
-        try {
-            await fetchJson("/api/auth/register", {
-                method: "POST",
-                body: JSON.stringify({
-                    username: registerForm.username.value,
-                    password: registerForm.password.value
-                })
-            });
-
-            registerForm.reset();
-            showStatus(registerStatus, "Account created and logged in.", "success");
-            await refreshAuthState();
-            await loadMyStudySets();
-            await loadPublicStudySets();
-        } catch (error) {
-            showStatus(registerStatus, error.message, "danger");
-        }
-    });
-
-    loginForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        showStatus(loginStatus, "Logging in...", "secondary");
-
-        try {
-            await fetchJson("/api/auth/login", {
-                method: "POST",
-                body: JSON.stringify({
-                    username: loginForm.username.value,
-                    password: loginForm.password.value
-                })
-            });
-
-            loginForm.reset();
-            showStatus(loginStatus, "Logged in.", "success");
-            await refreshAuthState();
-            await loadMyStudySets();
-            await loadPublicStudySets();
-        } catch (error) {
-            showStatus(loginStatus, error.message, "danger");
-        }
-    });
-
-    logoutButton.addEventListener("click", async () => {
-        try {
-            await fetch("/api/auth/logout", { method: "POST" });
-            currentUser = null;
-            sessionSummary.textContent = "Not logged in";
-            logoutButton.classList.add("d-none");
-            myStudySetList.innerHTML = "";
-            myLoadingState.textContent = "Log in to load your saved study sets.";
-            showStatus(loginStatus, "Logged out.", "secondary");
-        } catch (error) {
-            showStatus(loginStatus, "Unable to log out.", "danger");
-        }
-    });
-
-    studySetForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        showStatus(formStatus, "Saving study set...", "secondary");
-
-        try {
-            await fetchJson("/api/study-sets", {
-                method: "POST",
-                body: JSON.stringify({
-                    title: studySetForm.title.value,
-                    description: studySetForm.description.value,
-                    visibility: studySetForm.visibility.value
-                })
-            });
-
-            studySetForm.reset();
-            showStatus(formStatus, "Study set saved to your account.", "success");
-            await loadMyStudySets();
-            await loadPublicStudySets();
-        } catch (error) {
-            showStatus(formStatus, error.message, "danger");
-        }
-    });
-
-    aiForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        showStatus(aiStatus, "Generating and saving study set with Gemini...", "secondary");
-
-        try {
-            await fetchJson("/api/ai/generate-study-set", {
-                method: "POST",
-                body: JSON.stringify({
-                    prompt: aiForm.prompt.value,
-                    visibility: aiForm.visibility.value
-                })
-            });
-
-            aiForm.reset();
-            showStatus(aiStatus, "AI study set generated and saved.", "success");
-            await loadMyStudySets();
-            await loadPublicStudySets();
-        } catch (error) {
-            showStatus(aiStatus, error.message, "danger");
-        }
-    });
-
-    myRefreshButton.addEventListener("click", () => {
-        loadMyStudySets().catch(() => {
-            myLoadingState.textContent = "Unable to load your study sets.";
-        });
-    });
-
-    publicRefreshButton.addEventListener("click", () => {
-        loadPublicStudySets().catch(() => {
-            publicLoadingState.textContent = "Unable to load public study sets.";
-        });
-    });
-
-    Promise.resolve()
-        .then(refreshAuthState)
-        .then(loadMyStudySets)
-        .then(loadPublicStudySets)
-        .catch(() => {
-            sessionSummary.textContent = "Unable to initialize the app.";
-        });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </body>
 </html>

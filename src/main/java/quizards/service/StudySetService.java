@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -66,6 +67,12 @@ public class StudySetService {
         return toModel(studySetRepository.save(studySet));
     }
 
+    public StudySet createStudySetFromDraft(AppUserEntity owner, String title, String description, Visibility visibility, List<TextFlashcard> flashcards) {
+        return createStudySet(owner, title, description, visibility, flashcards.stream()
+                .map(Flashcard.class::cast)
+                .collect(Collectors.toList()));
+    }
+
     public StudySet getAccessibleStudySet(UUID studySetId, long userId) {
         StudySet studySet = findById(studySetId)
                 .orElseThrow(() -> new IllegalArgumentException("Study set not found."));
@@ -76,7 +83,13 @@ public class StudySetService {
     }
 
     private StudySet toModel(StudySetEntity entity) {
-        StudySet studySet = new StudySet(entity.getId(), entity.getTitle(), entity.getDescription(), entity.getVisibility());
+        StudySet studySet = new StudySet(
+                entity.getId(),
+                entity.getOwner().getId(),
+                entity.getTitle(),
+                entity.getDescription(),
+                entity.getVisibility()
+        );
         entity.getFlashcards().stream()
                 .sorted(Comparator.comparing(FlashcardEntity::getNextReviewAt))
                 .forEach(card -> {

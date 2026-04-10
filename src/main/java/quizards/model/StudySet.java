@@ -13,6 +13,7 @@ import java.util.UUID;
 public class StudySet {
 
     private final UUID id;
+    private final Long ownerUserId;
     private String title;
     private String description;
     private Visibility visibility;
@@ -20,7 +21,12 @@ public class StudySet {
     private final Set<Long> sharedWithUserIds;
 
     public StudySet(UUID id, String title, String description, Visibility visibility) {
+        this(id, null, title, description, visibility);
+    }
+
+    public StudySet(UUID id, Long ownerUserId, String title, String description, Visibility visibility) {
         this.id = Objects.requireNonNull(id, "id must not be null");
+        this.ownerUserId = ownerUserId;
         this.title = Objects.requireNonNull(title, "title must not be null");
         this.description = Objects.requireNonNull(description, "description must not be null");
         this.visibility = Objects.requireNonNull(visibility, "visibility must not be null");
@@ -34,6 +40,10 @@ public class StudySet {
 
     public String getTitle() {
         return title;
+    }
+
+    public Long getOwnerUserId() {
+        return ownerUserId;
     }
 
     public void setTitle(String title) {
@@ -89,6 +99,8 @@ public class StudySet {
     }
 
     public boolean canBeViewedBy(long userId) {
-        return visibility == Visibility.PUBLIC || sharedWithUserIds.contains(userId);
+        return visibility == Visibility.PUBLIC
+                || (ownerUserId != null && ownerUserId == userId)
+                || sharedWithUserIds.contains(userId);
     }
 }

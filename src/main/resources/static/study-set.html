@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Study Set</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top, rgba(13, 110, 253, 0.10), transparent 28%),
+                linear-gradient(180deg, #f8fafc 0%, #edf3f8 100%);
+            min-height: 100vh;
+        }
+
+        .flashcard + .flashcard {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom">
+    <div class="container">
+        <a class="navbar-brand fw-semibold" href="/">Quizards</a>
+        <div class="d-flex gap-2 align-items-center">
+            <span id="session-summary" class="text-secondary small">Checking session...</span>
+            <a class="btn btn-outline-secondary" href="/library.html">My Study Sets</a>
+            <a class="btn btn-outline-secondary" href="/create.html">Create</a>
+            <a class="btn btn-outline-secondary" href="/auth.html">Auth</a>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-5">
+    <section class="row justify-content-center">
+        <div class="col-xl-9">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <h1 id="title" class="h2 mb-2">Loading study set...</h1>
+                            <p id="description" class="text-secondary mb-0"></p>
+                        </div>
+                        <span id="visibility-badge" class="badge text-bg-secondary">...</span>
+                    </div>
+                    <div id="meta" class="small text-secondary mt-3"></div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Flashcards</h2>
+                            <p class="text-secondary mb-0">Click through the saved prompts and answers for this deck.</p>
+                        </div>
+                    </div>
+                    <div id="flashcards"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const sessionSummary = document.getElementById("session-summary");
+    const titleEl = document.getElementById("title");
+    const descriptionEl = document.getElementById("description");
+    const visibilityBadge = document.getElementById("visibility-badge");
+    const meta = document.getElementById("meta");
+    const flashcardsEl = document.getElementById("flashcards");
+
+    async function fetchJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            },
+            ...options
+        });
+
+        let body = null;
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+            body = await response.json();
+        }
+
+        if (!response.ok) {
+            throw new Error(body?.error || "Request failed.");
+        }
+
+        return body;
+    }
+
+    function renderStudySet(studySet) {
+        titleEl.textContent = studySet.title;
+        descriptionEl.textContent = studySet.description;
+        visibilityBadge.textContent = studySet.visibility;
+        visibilityBadge.className = `badge ${studySet.visibility === "PUBLIC" ? "text-bg-success" : "text-bg-secondary"}`;
+        meta.textContent = `${studySet.flashcardCount} flashcard${studySet.flashcardCount === 1 ? "" : "s"}`;
+
+        flashcardsEl.innerHTML = "";
+        if (!studySet.flashcards.length) {
+            flashcardsEl.innerHTML = `<div class="alert alert-light border mb-0">This study set has no flashcards yet.</div>`;
+            return;
+        }
+
+        studySet.flashcards.forEach((card, index) => {
+            const article = document.createElement("article");
+            article.className = "flashcard card border";
+            article.innerHTML = `
+                <div class="card-body">
+                    <div class="small text-secondary mb-2">Card ${index + 1}</div>
+                    <h3 class="h5">Prompt</h3>
+                    <p>${card.prompt}</p>
+                    <h4 class="h6 text-secondary mt-4">Answer</h4>
+                    <p class="mb-2">${card.answer}</p>
+                    <div class="small text-secondary">Type: ${card.type} | Mastery: ${card.masteryLevel}</div>
+                </div>
+            `;
+            flashcardsEl.appendChild(article);
+        });
+    }
+
+    async function refreshSession() {
+        const me = await fetchJson("/api/auth/me");
+        sessionSummary.textContent = me.authenticated ? `Logged in as ${me.username}` : "Browsing";
+    }
+
+    async function loadStudySet() {
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get("id");
+        if (!id) {
+            titleEl.textContent = "Study set not found";
+            descriptionEl.textContent = "No study set id was provided.";
+            return;
+        }
+
+        const studySet = await fetchJson(`/api/study-sets/${id}`);
+        renderStudySet(studySet);
+    }
+
+    Promise.resolve()
+        .then(refreshSession)
+        .then(loadStudySet)
+        .catch((error) => {
+            titleEl.textContent = "Unable to load study set";
+            descriptionEl.textContent = error.message;
+            flashcardsEl.innerHTML = "";
+        });
+</script>
+</body>
+</html>

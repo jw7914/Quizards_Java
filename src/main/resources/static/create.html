@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Study Set</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <style>
+        body {
+            background:
+                radial-gradient(circle at top, rgba(13, 110, 253, 0.10), transparent 28%),
+                linear-gradient(180deg, #f8fafc 0%, #edf3f8 100%);
+            min-height: 100vh;
+        }
+
+        .chat-log {
+            max-height: 320px;
+            overflow: auto;
+        }
+
+        .chat-bubble {
+            border-radius: 1rem;
+            padding: 0.9rem 1rem;
+        }
+
+        .review-card {
+            min-height: 340px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg bg-white border-bottom">
+    <div class="container">
+        <a class="navbar-brand fw-semibold" href="/">Quizards</a>
+        <div class="d-flex gap-2 align-items-center">
+            <span id="session-summary" class="text-secondary small">Checking session...</span>
+            <a class="btn btn-outline-secondary" href="/library.html">My Study Sets</a>
+            <a class="btn btn-outline-secondary" href="/auth.html">Auth</a>
+            <button id="logout-button" class="btn btn-outline-danger d-none" type="button">Log out</button>
+        </div>
+    </div>
+</nav>
+
+<main class="container py-5">
+    <section id="chat-stage" class="row justify-content-center">
+        <div class="col-xl-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h1 class="h3 mb-2">Create With AI</h1>
+                            <p class="text-secondary mb-0">Use one prompt to generate a draft study set. After generation, this chat view is replaced by the review carousel.</p>
+                        </div>
+                        <span class="badge text-bg-dark">One Prompt</span>
+                    </div>
+
+                    <div id="chat-log" class="chat-log d-grid gap-3 mb-3"></div>
+
+                    <form id="prompt-form" class="row g-3">
+                        <div class="col-12">
+                            <label for="prompt" class="form-label">Prompt or Notes</label>
+                            <textarea id="prompt" name="prompt" class="form-control" rows="8" placeholder="Example: Build a study set on cellular respiration with conceptual flashcards and one or two definition cards." required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="visibility" class="form-label">Visibility</label>
+                            <select id="visibility" name="visibility" class="form-select">
+                                <option value="PRIVATE">Private</option>
+                                <option value="PUBLIC">Public</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-grid">
+                            <label class="form-label d-none d-md-block">&nbsp;</label>
+                            <button id="generate-button" type="submit" class="btn btn-dark btn-lg">Generate Draft</button>
+                        </div>
+                    </form>
+
+                    <div id="draft-status" class="alert alert-secondary mt-3 mb-0 d-none"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="review-stage" class="row justify-content-center hidden">
+        <div class="col-xl-9">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Draft Review</h2>
+                            <p class="text-secondary mb-0">Review flashcards one at a time like a carousel before saving this deck to your account.</p>
+                        </div>
+                        <span class="badge text-bg-primary">Review First</span>
+                    </div>
+
+                    <form id="save-form" class="row g-3">
+                        <div class="col-12">
+                            <label for="draft-title" class="form-label">Study Set Title</label>
+                            <input id="draft-title" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="draft-summary" class="form-label">Summary / Description</label>
+                            <textarea id="draft-summary" class="form-control" rows="4" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label mb-0">Flashcard Review</label>
+                                <div id="card-position" class="small text-secondary">No cards yet</div>
+                            </div>
+                            <div class="card border review-card">
+                                <div class="card-body d-flex flex-column">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div class="fw-semibold">Current Card</div>
+                                        <button id="remove-card-button" class="btn btn-outline-danger btn-sm" type="button">Remove Card</button>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="card-prompt" class="form-label">Prompt</label>
+                                        <textarea id="card-prompt" class="form-control" rows="4" required></textarea>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label for="card-answer" class="form-label">Answer</label>
+                                        <textarea id="card-answer" class="form-control" rows="5" required></textarea>
+                                    </div>
+                                    <div class="mt-auto d-flex justify-content-between gap-2">
+                                        <button id="prev-card-button" class="btn btn-outline-secondary" type="button">Previous</button>
+                                        <button id="add-card-button" class="btn btn-outline-primary" type="button">Add Card</button>
+                                        <button id="next-card-button" class="btn btn-outline-secondary" type="button">Next</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">Save To My Account</button>
+                        </div>
+                    </form>
+
+                    <div id="save-status" class="alert alert-secondary mt-3 mb-0 d-none"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<script>
+    const sessionSummary = document.getElementById("session-summary");
+    const logoutButton = document.getElementById("logout-button");
+    const chatStage = document.getElementById("chat-stage");
+    const reviewStage = document.getElementById("review-stage");
+    const promptForm = document.getElementById("prompt-form");
+    const saveForm = document.getElementById("save-form");
+    const draftStatus = document.getElementById("draft-status");
+    const saveStatus = document.getElementById("save-status");
+    const chatLog = document.getElementById("chat-log");
+    const addCardButton = document.getElementById("add-card-button");
+    const removeCardButton = document.getElementById("remove-card-button");
+    const prevCardButton = document.getElementById("prev-card-button");
+    const nextCardButton = document.getElementById("next-card-button");
+    const cardPosition = document.getElementById("card-position");
+    const generateButton = document.getElementById("generate-button");
+
+    const draftTitle = document.getElementById("draft-title");
+    const draftSummary = document.getElementById("draft-summary");
+    const cardPrompt = document.getElementById("card-prompt");
+    const cardAnswer = document.getElementById("card-answer");
+
+    let currentUser = null;
+    let draftCards = [];
+    let currentCardIndex = 0;
+    let promptConsumed = false;
+
+    function showStatus(element, message, tone) {
+        element.className = `alert mt-3 mb-0 alert-${tone}`;
+        element.textContent = message;
+    }
+
+    function showReviewStage() {
+        chatStage.classList.add("hidden");
+        reviewStage.classList.remove("hidden");
+    }
+
+    function appendChat(role, message) {
+        const bubble = document.createElement("div");
+        bubble.className = `chat-bubble ${role === "user" ? "bg-dark text-white ms-4" : "bg-light border me-4"}`;
+        bubble.innerHTML = `<div class="small text-uppercase mb-1">${role}</div><div>${message}</div>`;
+        chatLog.appendChild(bubble);
+        chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    function setPromptLockedState(locked) {
+        promptForm.prompt.disabled = locked;
+        promptForm.visibility.disabled = locked;
+        generateButton.disabled = locked;
+    }
+
+    function syncCurrentCard() {
+        if (!draftCards.length) {
+            cardPrompt.value = "";
+            cardAnswer.value = "";
+            cardPrompt.disabled = true;
+            cardAnswer.disabled = true;
+            prevCardButton.disabled = true;
+            nextCardButton.disabled = true;
+            removeCardButton.disabled = true;
+            cardPosition.textContent = "No cards yet";
+            return;
+        }
+
+        const current = draftCards[currentCardIndex];
+        cardPrompt.disabled = false;
+        cardAnswer.disabled = false;
+        cardPrompt.value = current.prompt;
+        cardAnswer.value = current.answer;
+        prevCardButton.disabled = currentCardIndex === 0;
+        nextCardButton.disabled = currentCardIndex === draftCards.length - 1;
+        removeCardButton.disabled = draftCards.length === 1;
+        cardPosition.textContent = `Card ${currentCardIndex + 1} of ${draftCards.length}`;
+    }
+
+    function persistCurrentCardFields() {
+        if (!draftCards.length) {
+            return;
+        }
+        draftCards[currentCardIndex] = {
+            prompt: cardPrompt.value.trim(),
+            answer: cardAnswer.value.trim()
+        };
+    }
+
+    function populateDraft(draft) {
+        draftTitle.value = draft.title || "";
+        draftSummary.value = draft.summary || "";
+        draftCards = (draft.flashcards || []).map((card) => ({
+            prompt: card.prompt || "",
+            answer: card.answer || ""
+        }));
+        if (!draftCards.length) {
+            draftCards = [{ prompt: "", answer: "" }];
+        }
+        currentCardIndex = 0;
+        syncCurrentCard();
+    }
+
+    function collectDraftCards() {
+        persistCurrentCardFields();
+        return draftCards.filter((card) => card.prompt && card.answer);
+    }
+
+    async function fetchJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            },
+            ...options
+        });
+
+        let body = null;
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+            body = await response.json();
+        }
+
+        if (!response.ok) {
+            throw new Error(body?.error || "Request failed.");
+        }
+
+        return body;
+    }
+
+    async function refreshSession() {
+        const me = await fetchJson("/api/auth/me");
+        currentUser = me.authenticated ? me : null;
+        if (!currentUser) {
+            window.location.href = "/auth.html";
+            return;
+        }
+        sessionSummary.textContent = `Logged in as ${currentUser.username}`;
+        logoutButton.classList.remove("d-none");
+    }
+
+    promptForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (promptConsumed) {
+            showStatus(draftStatus, "You can only prompt the AI once on this page. Review the draft you already generated.", "warning");
+            return;
+        }
+        const prompt = promptForm.prompt.value.trim();
+        appendChat("user", prompt);
+        showStatus(draftStatus, "Generating draft deck...", "secondary");
+        promptConsumed = true;
+        setPromptLockedState(true);
+
+        try {
+            const draft = await fetchJson("/api/ai/generate-draft", {
+                method: "POST",
+                body: JSON.stringify({
+                    prompt,
+                    visibility: promptForm.visibility.value
+                })
+            });
+
+            appendChat("assistant", `Generated "${draft.title}" with ${draft.flashcards.length} flashcards. Review it on the right before saving.`);
+            populateDraft(draft);
+            showReviewStage();
+            showStatus(draftStatus, "Draft generated. Review and edit before saving.", "success");
+        } catch (error) {
+            appendChat("assistant", error.message);
+            showStatus(draftStatus, error.message, "danger");
+        }
+    });
+
+    saveForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const cards = collectDraftCards();
+        if (cards.length === 0) {
+            showStatus(saveStatus, "Add at least one flashcard before saving.", "danger");
+            return;
+        }
+
+        showStatus(saveStatus, "Saving study set...", "secondary");
+
+        try {
+            const saved = await fetchJson("/api/ai/save-generated-study-set", {
+                method: "POST",
+                body: JSON.stringify({
+                    title: draftTitle.value.trim(),
+                    description: draftSummary.value.trim(),
+                    visibility: promptForm.visibility.value,
+                    flashcards: cards
+                })
+            });
+
+            showStatus(saveStatus, `Saved "${saved.title}" to ${currentUser.username}.`, "success");
+        } catch (error) {
+            showStatus(saveStatus, error.message, "danger");
+        }
+    });
+
+    prevCardButton.addEventListener("click", () => {
+        persistCurrentCardFields();
+        if (currentCardIndex > 0) {
+            currentCardIndex -= 1;
+            syncCurrentCard();
+        }
+    });
+
+    nextCardButton.addEventListener("click", () => {
+        persistCurrentCardFields();
+        if (currentCardIndex < draftCards.length - 1) {
+            currentCardIndex += 1;
+            syncCurrentCard();
+        }
+    });
+
+    addCardButton.addEventListener("click", () => {
+        persistCurrentCardFields();
+        draftCards.push({ prompt: "", answer: "" });
+        currentCardIndex = draftCards.length - 1;
+        syncCurrentCard();
+    });
+
+    removeCardButton.addEventListener("click", () => {
+        if (draftCards.length <= 1) {
+            return;
+        }
+        draftCards.splice(currentCardIndex, 1);
+        currentCardIndex = Math.max(0, Math.min(currentCardIndex, draftCards.length - 1));
+        syncCurrentCard();
+    });
+
+    logoutButton.addEventListener("click", async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        window.location.href = "/auth.html";
+    });
+
+    draftCards = [{ prompt: "", answer: "" }];
+    syncCurrentCard();
+    refreshSession().catch(() => {
+        window.location.href = "/auth.html";
+    });
+</script>
+</body>
+</html>

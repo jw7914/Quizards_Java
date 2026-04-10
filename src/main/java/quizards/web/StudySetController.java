@@ -4,10 +4,14 @@ import quizards.ai.AIService;
 import quizards.ai.GeneratedDeck;
 import quizards.domain.Visibility;
 import quizards.model.StudySet;
+import quizards.model.TextFlashcard;
 import quizards.service.StudySetService;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +49,16 @@ public class StudySetController {
                 .toList();
     }
 
+    @GetMapping("/study-sets/{studySetId}")
+    public StudySetDetailResponse getStudySet(@PathVariable UUID studySetId, Authentication authentication) {
+        long userId = -1L;
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            userId = requireOwner(authentication).getId();
+        }
+        StudySet studySet = studySetService.getAccessibleStudySet(studySetId, userId);
+        return toDetailResponse(studySet);
+    }
+
     @PostMapping("/study-sets")
     public StudySetResponse createStudySet(@RequestBody CreateStudySetRequest request, Authentication authentication) {
         AppUserEntity owner = requireOwner(authentication);
@@ -62,17 +76,31 @@ public class StudySetController {
         return aiService.summarizeNotes(notes);
     }
 
-    @PostMapping("/ai/generate-study-set")
-    public StudySetResponse generateStudySet(@RequestBody GenerateStudySetRequest request, Authentication authentication) {
+    @PostMapping("/ai/generate-draft")
+    public GeneratedDeckResponse generateDraft(@RequestBody GenerateStudySetRequest request, Authentication authentication) {
+        requireOwner(authentication);
         GeneratedDeck generatedDeck = aiService.generateFlashcardsFromPrompt(request.prompt());
-        AppUserEntity owner = requireOwner(authentication);
+        return toDraftResponse(generatedDeck);
+    }
 
-        StudySet studySet = studySetService.createStudySet(
+    @PostMapping("/ai/save-generated-study-set")
+    public StudySetResponse saveGeneratedStudySet(@RequestBody SaveGeneratedStudySetRequest request, Authentication authentication) {
+        AppUserEntity owner = requireOwner(authentication);
+        List<TextFlashcard> flashcards = new ArrayList<>();
+        if (request.flashcards() != null) {
+            request.flashcards().forEach(card -> flashcards.add(new TextFlashcard(
+                    UUID.randomUUID(),
+                    card.prompt(),
+                    card.answer()
+            )));
+        }
+
+        StudySet studySet = studySetService.createStudySetFromDraft(
                 owner,
-                generatedDeck.title(),
-                generatedDeck.summary(),
+                request.title(),
+                request.description(),
                 request.visibility() == null ? Visibility.PRIVATE : request.visibility(),
-                generatedDeck.flashcards()
+                flashcards
         );
         return toResponse(studySet, owner.getUsername());
     }
@@ -103,6 +131,36 @@ public class StudySetController {
                 studySet.getVisibility(),
                 ownerUsername,
                 studySet.getCards().size()
+        );
+    }
+
+    private GeneratedDeckResponse toDraftResponse(GeneratedDeck generatedDeck) {
+        return new GeneratedDeckResponse(
+                generatedDeck.title(),
+                generatedDeck.summary(),
+                generatedDeck.keyTakeaways(),
+                generatedDeck.flashcards().stream()
+                        .map(card -> new FlashcardDraftResponse(card.getPrompt(), card.getAnswer()))
+                        .toList()
+        );
+    }
+
+    private StudySetDetailResponse toDetailResponse(StudySet studySet) {
+        return new StudySetDetailResponse(
+                studySet.getId(),
+                studySet.getTitle(),
+                studySet.getDescription(),
+                studySet.getVisibility(),
+                studySet.getCards().size(),
+                studySet.getCards().stream()
+                        .map(card -> new FlashcardResponse(
+                                card.getId(),
+                                card.getPrompt(),
+                                card.getAnswer(),
+                                card.getType(),
+                                card.getMasteryLevel()
+                        ))
+                        .toList()
         );
     }
 }
