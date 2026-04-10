@@ -37,7 +37,7 @@
 <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
     <div class="container">
         <span class="navbar-brand fw-semibold">Quizards</span>
-        <span class="navbar-text text-body-secondary">Spring Boot browser demo</span>
+        <span class="navbar-text text-body-secondary">Spring Boot + Supabase login + AI study sets</span>
     </div>
 </nav>
 
@@ -45,27 +45,79 @@
     <section class="card border-0 shadow-lg hero-card mb-4">
         <div class="card-body p-4 p-md-5">
             <div class="row align-items-center g-4">
-                <div class="col-lg-7">
-                    <span class="badge text-bg-primary-subtle text-primary-emphasis mb-3">Browser-ready UI</span>
-                    <h1 class="display-5 fw-bold mb-3">Study sets, now with a real web front end.</h1>
-                    <p class="lead text-body-secondary mb-4">This page is served by your Spring Boot app, styled with Bootstrap 5.3, and connected to the same Quizards API you already had in Java.</p>
-                    <div class="d-flex flex-wrap gap-2">
-                        <span class="badge rounded-pill text-bg-light border">`/` landing page</span>
-                        <span class="badge rounded-pill text-bg-light border">`/api/study-sets` data</span>
-                        <span class="badge rounded-pill text-bg-light border">responsive layout</span>
-                    </div>
+                <div class="col-lg-8">
+                    <span class="badge text-bg-primary-subtle text-primary-emphasis mb-3">Logged-in study flow</span>
+                    <h1 class="display-5 fw-bold mb-3">Register, sign in, generate AI decks, and save them to your account.</h1>
+                    <p class="lead text-body-secondary mb-0">Your Spring Boot app now owns the auth flow and stores study sets in Postgres. AI-generated decks are saved under the logged-in user instead of a temporary demo profile.</p>
                 </div>
-                <div class="col-lg-5">
+                <div class="col-lg-4">
                     <div class="card bg-primary text-white shadow-sm">
                         <div class="card-body">
-                            <p class="text-uppercase small mb-2">What this proves</p>
-                            <ul class="mb-0">
-                                <li>The project starts as an HTTP app.</li>
-                                <li>The browser has an actual home page.</li>
-                                <li>New study sets can be created live.</li>
-                            </ul>
+                            <p class="text-uppercase small mb-2">Current session</p>
+                            <div id="session-summary" class="fw-semibold">Checking login status...</div>
+                            <button id="logout-button" class="btn btn-light btn-sm mt-3 d-none" type="button">Log out</button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-4 mb-4">
+        <div class="col-12 col-xl-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Register</h2>
+                            <p class="text-body-secondary mb-0">Create an account stored in your Supabase Postgres database.</p>
+                        </div>
+                        <span class="badge text-bg-success">New User</span>
+                    </div>
+
+                    <form id="register-form" class="row g-3">
+                        <div class="col-12">
+                            <label for="register-username" class="form-label">Username</label>
+                            <input id="register-username" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="register-password" class="form-label">Password</label>
+                            <input id="register-password" name="password" type="password" class="form-control" minlength="8" required>
+                        </div>
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-success btn-lg">Create Account</button>
+                        </div>
+                    </form>
+                    <div id="register-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Log In</h2>
+                            <p class="text-body-secondary mb-0">Use your app account to save generated study sets to your profile.</p>
+                        </div>
+                        <span class="badge text-bg-dark">Session</span>
+                    </div>
+
+                    <form id="login-form" class="row g-3">
+                        <div class="col-12">
+                            <label for="login-username" class="form-label">Username</label>
+                            <input id="login-username" name="username" class="form-control" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="login-password" class="form-label">Password</label>
+                            <input id="login-password" name="password" type="password" class="form-control" required>
+                        </div>
+                        <div class="col-12 d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Log In</button>
+                        </div>
+                    </form>
+                    <div id="login-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
                 </div>
             </div>
         </div>
@@ -78,7 +130,7 @@
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <h2 class="h4 mb-1">Create a Study Set</h2>
-                            <p class="text-body-secondary mb-0">Post directly to the Spring controller.</p>
+                            <p class="text-body-secondary mb-0">Requires login. Saved to your account.</p>
                         </div>
                         <span class="badge text-bg-dark">POST</span>
                     </div>
@@ -100,10 +152,9 @@
                             </select>
                         </div>
                         <div class="col-12 d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Create Study Set</button>
+                            <button type="submit" class="btn btn-outline-primary btn-lg">Save Study Set</button>
                         </div>
                     </form>
-
                     <div id="form-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
                 </div>
             </div>
@@ -115,7 +166,7 @@
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
                             <h2 class="h4 mb-1">Generate With Gemini</h2>
-                            <p class="text-body-secondary mb-0">Paste notes, a topic, or a study request.</p>
+                            <p class="text-body-secondary mb-0">AI-created decks are saved to the logged-in user.</p>
                         </div>
                         <span class="badge text-bg-primary">AI</span>
                     </div>
@@ -133,10 +184,9 @@
                             </select>
                         </div>
                         <div class="col-12 d-grid">
-                            <button type="submit" class="btn btn-dark btn-lg">Generate Study Set</button>
+                            <button type="submit" class="btn btn-dark btn-lg">Generate and Save</button>
                         </div>
                     </form>
-
                     <div id="ai-status" class="alert alert-secondary mt-3 mb-0 d-none" role="status"></div>
                 </div>
             </div>
@@ -147,14 +197,33 @@
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
-                            <h2 class="h4 mb-1">Public Study Sets</h2>
-                            <p class="text-body-secondary mb-0">Loaded from the in-memory service layer.</p>
+                            <h2 class="h4 mb-1">Your Study Sets</h2>
+                            <p class="text-body-secondary mb-0">Visible after login.</p>
                         </div>
-                        <button id="refresh-button" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
+                        <button id="my-refresh-button" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
                     </div>
 
-                    <div id="loading-state" class="text-body-secondary small mb-3">Loading from <code>/api/study-sets</code>...</div>
-                    <div id="study-set-list" class="deck-list"></div>
+                    <div id="my-loading-state" class="text-body-secondary small mb-3">Log in to load your saved study sets.</div>
+                    <div id="my-study-set-list" class="deck-list"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="row g-4 mt-1">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h2 class="h4 mb-1">Public Study Sets</h2>
+                            <p class="text-body-secondary mb-0">Available to everyone.</p>
+                        </div>
+                        <button id="public-refresh-button" class="btn btn-outline-secondary btn-sm" type="button">Refresh</button>
+                    </div>
+
+                    <div id="public-loading-state" class="text-body-secondary small mb-3">Loading from <code>/api/study-sets</code>...</div>
+                    <div id="public-study-set-list" class="deck-list"></div>
                 </div>
             </div>
         </div>
@@ -162,27 +231,38 @@
 </main>
 
 <script>
-    const list = document.getElementById("study-set-list");
-    const form = document.getElementById("study-set-form");
+    const registerForm = document.getElementById("register-form");
+    const loginForm = document.getElementById("login-form");
+    const studySetForm = document.getElementById("study-set-form");
     const aiForm = document.getElementById("ai-form");
+
+    const registerStatus = document.getElementById("register-status");
+    const loginStatus = document.getElementById("login-status");
     const formStatus = document.getElementById("form-status");
     const aiStatus = document.getElementById("ai-status");
-    const loadingState = document.getElementById("loading-state");
-    const refreshButton = document.getElementById("refresh-button");
+    const sessionSummary = document.getElementById("session-summary");
+    const logoutButton = document.getElementById("logout-button");
+
+    const myStudySetList = document.getElementById("my-study-set-list");
+    const publicStudySetList = document.getElementById("public-study-set-list");
+    const myLoadingState = document.getElementById("my-loading-state");
+    const publicLoadingState = document.getElementById("public-loading-state");
+    const myRefreshButton = document.getElementById("my-refresh-button");
+    const publicRefreshButton = document.getElementById("public-refresh-button");
+
+    let currentUser = null;
 
     function showStatus(element, message, tone) {
         element.className = `alert mt-3 mb-0 alert-${tone}`;
         element.textContent = message;
     }
 
-    function renderStudySets(studySets) {
-        list.innerHTML = "";
+    function renderStudySets(listElement, studySets, emptyMessage) {
+        listElement.innerHTML = "";
 
         if (studySets.length === 0) {
-            list.innerHTML = `
-                <div class="alert alert-light border mb-0">
-                    No study sets yet.
-                </div>
+            listElement.innerHTML = `
+                <div class="alert alert-light border mb-0">${emptyMessage}</div>
             `;
             return;
         }
@@ -200,95 +280,193 @@
                         <span class="badge text-bg-${studySet.visibility === "PUBLIC" ? "success" : "secondary"}">${studySet.visibility}</span>
                     </div>
                     <div class="small text-body-secondary">ID: ${studySet.id}</div>
-                    <div class="small text-body-secondary mt-1">${studySet.cards.length} flashcard${studySet.cards.length === 1 ? "" : "s"}</div>
+                    <div class="small text-body-secondary mt-1">${studySet.flashcardCount} flashcard${studySet.flashcardCount === 1 ? "" : "s"}</div>
+                    ${studySet.ownerUsername ? `<div class="small text-body-secondary mt-1">Owner: ${studySet.ownerUsername}</div>` : ""}
                 </div>
             `;
-            list.appendChild(item);
+            listElement.appendChild(item);
         });
     }
 
-    async function loadStudySets() {
-        loadingState.textContent = "Loading from /api/study-sets...";
-        const response = await fetch("/api/study-sets");
+    async function fetchJson(url, options = {}) {
+        const response = await fetch(url, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {})
+            },
+            ...options
+        });
 
-        if (!response.ok) {
-            throw new Error("Unable to load study sets.");
+        let body = null;
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("application/json")) {
+            body = await response.json();
         }
 
-        const studySets = await response.json();
-        renderStudySets(studySets);
-        loadingState.textContent = `${studySets.length} study set${studySets.length === 1 ? "" : "s"} loaded.`;
+        if (!response.ok) {
+            throw new Error(body?.error || "Request failed.");
+        }
+
+        return body;
     }
 
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        showStatus(formStatus, "Saving study set...", "secondary");
+    async function refreshAuthState() {
+        const me = await fetchJson("/api/auth/me");
+        currentUser = me.authenticated ? me : null;
 
-        const payload = {
-            title: form.title.value,
-            description: form.description.value,
-            visibility: form.visibility.value
-        };
+        if (currentUser) {
+            sessionSummary.textContent = `Logged in as ${currentUser.username}`;
+            logoutButton.classList.remove("d-none");
+        } else {
+            sessionSummary.textContent = "Not logged in";
+            logoutButton.classList.add("d-none");
+        }
+    }
 
-        const response = await fetch("/api/study-sets", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
+    async function loadPublicStudySets() {
+        publicLoadingState.textContent = "Loading from /api/study-sets...";
+        const studySets = await fetchJson("/api/study-sets");
+        renderStudySets(publicStudySetList, studySets, "No public study sets yet.");
+        publicLoadingState.textContent = `${studySets.length} public study set${studySets.length === 1 ? "" : "s"} loaded.`;
+    }
 
-        if (!response.ok) {
-            showStatus(formStatus, "Unable to create the study set.", "danger");
+    async function loadMyStudySets() {
+        if (!currentUser) {
+            myStudySetList.innerHTML = "";
+            myLoadingState.textContent = "Log in to load your saved study sets.";
             return;
         }
 
-        form.reset();
-        showStatus(formStatus, "Study set created.", "success");
-        await loadStudySets();
+        myLoadingState.textContent = "Loading your study sets...";
+        const studySets = await fetchJson("/api/my/study-sets");
+        renderStudySets(myStudySetList, studySets, "You have not saved any study sets yet.");
+        myLoadingState.textContent = `${studySets.length} personal study set${studySets.length === 1 ? "" : "s"} loaded.`;
+    }
+
+    registerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showStatus(registerStatus, "Creating account...", "secondary");
+
+        try {
+            await fetchJson("/api/auth/register", {
+                method: "POST",
+                body: JSON.stringify({
+                    username: registerForm.username.value,
+                    password: registerForm.password.value
+                })
+            });
+
+            registerForm.reset();
+            showStatus(registerStatus, "Account created and logged in.", "success");
+            await refreshAuthState();
+            await loadMyStudySets();
+            await loadPublicStudySets();
+        } catch (error) {
+            showStatus(registerStatus, error.message, "danger");
+        }
+    });
+
+    loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showStatus(loginStatus, "Logging in...", "secondary");
+
+        try {
+            await fetchJson("/api/auth/login", {
+                method: "POST",
+                body: JSON.stringify({
+                    username: loginForm.username.value,
+                    password: loginForm.password.value
+                })
+            });
+
+            loginForm.reset();
+            showStatus(loginStatus, "Logged in.", "success");
+            await refreshAuthState();
+            await loadMyStudySets();
+            await loadPublicStudySets();
+        } catch (error) {
+            showStatus(loginStatus, error.message, "danger");
+        }
+    });
+
+    logoutButton.addEventListener("click", async () => {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" });
+            currentUser = null;
+            sessionSummary.textContent = "Not logged in";
+            logoutButton.classList.add("d-none");
+            myStudySetList.innerHTML = "";
+            myLoadingState.textContent = "Log in to load your saved study sets.";
+            showStatus(loginStatus, "Logged out.", "secondary");
+        } catch (error) {
+            showStatus(loginStatus, "Unable to log out.", "danger");
+        }
+    });
+
+    studySetForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        showStatus(formStatus, "Saving study set...", "secondary");
+
+        try {
+            await fetchJson("/api/study-sets", {
+                method: "POST",
+                body: JSON.stringify({
+                    title: studySetForm.title.value,
+                    description: studySetForm.description.value,
+                    visibility: studySetForm.visibility.value
+                })
+            });
+
+            studySetForm.reset();
+            showStatus(formStatus, "Study set saved to your account.", "success");
+            await loadMyStudySets();
+            await loadPublicStudySets();
+        } catch (error) {
+            showStatus(formStatus, error.message, "danger");
+        }
     });
 
     aiForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        showStatus(aiStatus, "Generating study set with Gemini...", "secondary");
+        showStatus(aiStatus, "Generating and saving study set with Gemini...", "secondary");
 
-        const payload = {
-            prompt: aiForm.prompt.value,
-            visibility: aiForm.visibility.value
-        };
+        try {
+            await fetchJson("/api/ai/generate-study-set", {
+                method: "POST",
+                body: JSON.stringify({
+                    prompt: aiForm.prompt.value,
+                    visibility: aiForm.visibility.value
+                })
+            });
 
-        const response = await fetch("/api/ai/generate-study-set", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            showStatus(aiStatus, "Gemini could not generate the study set. Check the server configuration and API key.", "danger");
-            return;
+            aiForm.reset();
+            showStatus(aiStatus, "AI study set generated and saved.", "success");
+            await loadMyStudySets();
+            await loadPublicStudySets();
+        } catch (error) {
+            showStatus(aiStatus, error.message, "danger");
         }
-
-        aiForm.reset();
-        showStatus(aiStatus, "AI study set created.", "success");
-        await loadStudySets();
     });
 
-    refreshButton.addEventListener("click", () => {
-        loadStudySets().catch(() => {
-            loadingState.textContent = "Unable to load study sets.";
+    myRefreshButton.addEventListener("click", () => {
+        loadMyStudySets().catch(() => {
+            myLoadingState.textContent = "Unable to load your study sets.";
         });
     });
 
-    loadStudySets().catch(() => {
-        list.innerHTML = `
-            <div class="alert alert-danger mb-0">
-                Unable to load study sets.
-            </div>
-        `;
-        loadingState.textContent = "The API did not respond.";
+    publicRefreshButton.addEventListener("click", () => {
+        loadPublicStudySets().catch(() => {
+            publicLoadingState.textContent = "Unable to load public study sets.";
+        });
     });
+
+    Promise.resolve()
+        .then(refreshAuthState)
+        .then(loadMyStudySets)
+        .then(loadPublicStudySets)
+        .catch(() => {
+            sessionSummary.textContent = "Unable to initialize the app.";
+        });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </body>

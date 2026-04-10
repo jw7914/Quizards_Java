@@ -25,11 +25,6 @@ public class QuizardsApplication {
     }
 
     @Bean
-    StudySetService studySetService(InputValidator inputValidator) {
-        return new StudySetService(inputValidator);
-    }
-
-    @Bean
     AIService aiService(AIProperties aiProperties) {
         if (!aiProperties.hasGeminiApiKey()) {
             return new StubAIService();
