@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Box, AppBar, Toolbar, IconButton, Typography, Drawer, Divider, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Button, Avatar } from '@mui/material';
-import { Link as RouterLink, useNavigate, useLocation, Outlet } from 'react-router-dom';
-import MenuIcon from '@mui/icons-material/Menu';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import AddCircleIcon from '@mui/icons-material/AddCircle';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import React, { useEffect, useState } from 'react';
+import { BookOpen, LogOut, Menu, Sparkles, WandSparkles } from 'lucide-react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import Logo from '@/components/brand/Logo';
+import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout({ session }) {
   const navigate = useNavigate();
@@ -20,65 +20,83 @@ export default function DashboardLayout({ session }) {
     window.location.href = '/login';
   }
 
-  const drawerWidth = 280;
-
-  const drawerContext = (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'rgba(24, 24, 27, 0.4)' }}>
-      <Box sx={{ p: 3, display: 'flex', alignItems: 'center' }}>
-        <AutoAwesomeIcon color="primary" sx={{ mr: 1.5, fontSize: 32 }} />
-        <Typography variant="h5" sx={{ flexGrow: 1 }}>Quizards</Typography>
-      </Box>
-      <Divider />
-      <Box sx={{ flexGrow: 1, px: 2, py: 3 }}>
-        <Button component={RouterLink} to="/create" variant="contained" color="secondary" fullWidth startIcon={<AddCircleIcon />} sx={{ mb: 4, py: 1.5 }}>
-          New Study Set
-        </Button>
-        <Typography variant="overline" color="text.secondary" sx={{ px: 1 }}>My Learning</Typography>
-        <List sx={{ mt: 1 }}>
-          <ListItem disablePadding sx={{ mb: 1 }}>
-            <ListItemButton component={RouterLink} to="/library" selected={location.pathname === '/library'} sx={{ borderRadius: 3, '&.Mui-selected': { bgcolor: 'rgba(139, 92, 246, 0.15)' } }}>
-              <ListItemIcon sx={{ minWidth: 40 }}><LibraryBooksIcon color={location.pathname === '/library' ? 'primary' : 'inherit'} /></ListItemIcon>
-              <ListItemText primary="Library" primaryTypographyProps={{ fontWeight: location.pathname === '/library' ? 700 : 500 }} />
-            </ListItemButton>
-          </ListItem>
-        </List>
-      </Box>
-      <Divider />
-      <Box sx={{ p: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', p: 1, mb: 1 }}>
-          <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', mr: 2 }}>{session.username?.charAt(0).toUpperCase()}</Avatar>
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>{session.username}</Typography>
-        </Box>
-        <Button onClick={handleLogout} variant="text" color="error" fullWidth startIcon={<ExitToAppIcon />} sx={{ justifyContent: 'flex-start', px: 2 }}>
-          Log Out
-        </Button>
-      </Box>
-    </Box>
-  );
-
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <AppBar position="fixed" elevation={0} sx={{ width: { md: `calc(100% - ${drawerWidth}px)` }, ml: { md: `${drawerWidth}px` }, bgcolor: 'rgba(9, 9, 11, 0.8)', backdropFilter: 'blur(16px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <Toolbar>
-          <IconButton color="inherit" edge="start" onClick={() => setMobileOpen(!mobileOpen)} sx={{ mr: 2, display: { md: 'none' } }}>
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }}>
-            {location.pathname === '/create' ? 'Create with AI' : 'Study Library'}
-          </Typography>
-        </Toolbar>
-      </AppBar>
-      <Box component="nav" sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}>
-        <Drawer variant="temporary" open={mobileOpen} onClose={() => setMobileOpen(false)} ModalProps={{ keepMounted: true }} sx={{ display: { xs: 'block', md: 'none' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundImage: 'none', borderRight: '1px solid rgba(255,255,255,0.08)' } }}>
-          {drawerContext}
-        </Drawer>
-        <Drawer variant="permanent" sx={{ display: { xs: 'none', md: 'block' }, '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth, backgroundImage: 'none', borderRight: '1px solid rgba(255,255,255,0.08)' } }} open>
-          {drawerContext}
-        </Drawer>
-      </Box>
-      <Box component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 4 }, width: { md: `calc(100% - ${drawerWidth}px)` }, mt: '64px' }}>
-        <Outlet />
-      </Box>
-    </Box>
+    <div className="min-h-screen">
+      <div className="page-shell py-4 lg:py-6">
+        <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <aside
+            className={cn(
+              'surface-panel fixed inset-y-4 left-4 z-40 w-[280px] rounded-[32px] p-5 transition-transform lg:sticky lg:top-6 lg:block lg:h-[calc(100vh-3rem)] lg:translate-x-0',
+              mobileOpen ? 'translate-x-0' : '-translate-x-[120%]',
+              'lg:translate-x-0'
+            )}
+          >
+            <div className="flex h-full flex-col">
+              <div className="flex items-center justify-between">
+                <Logo to="/library" />
+                <button className="rounded-full p-2 text-muted-foreground lg:hidden" onClick={() => setMobileOpen(false)} type="button">
+                  <Menu className="h-5 w-5" />
+                </button>
+              </div>
+              <Button className="mt-8 w-full" variant="secondary" onClick={() => navigate('/create')}>
+                <WandSparkles className="h-4 w-4" />
+                New study set
+              </Button>
+              <div className="mt-8 space-y-2">
+                <NavLink icon={BookOpen} label="Library" active={location.pathname === '/library'} to="/library" />
+                <NavLink icon={Sparkles} label="Create with AI" active={location.pathname === '/create'} to="/create" />
+              </div>
+              <div className="mt-8 rounded-[28px] bg-muted/80 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Workflow</div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  Prompt the AI, trim the deck, then switch into focused review without leaving the app.
+                </p>
+              </div>
+              <div className="mt-auto">
+                <Separator className="mb-4 mt-6" />
+                <div className="flex items-center gap-3">
+                  <Avatar>{session.username?.slice(0, 1)?.toUpperCase() || '?'}</Avatar>
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold">{session.username}</div>
+                    <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Signed in</div>
+                  </div>
+                </div>
+                <Button className="mt-4 w-full" variant="outline" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  Log out
+                </Button>
+              </div>
+            </div>
+          </aside>
+
+          {mobileOpen ? <button className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setMobileOpen(false)} type="button" /> : null}
+
+          <main className="min-w-0">
+            <div className="surface-panel mb-4 flex items-center justify-between rounded-[28px] px-4 py-3 lg:hidden">
+              <Logo to="/library" />
+              <Button size="icon" variant="outline" onClick={() => setMobileOpen(true)}>
+                <Menu className="h-5 w-5" />
+              </Button>
+            </div>
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NavLink({ icon: Icon, label, to, active }) {
+  return (
+    <Link
+      className={cn(
+        'flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition',
+        active ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/15' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+      )}
+      to={to}
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
   );
 }

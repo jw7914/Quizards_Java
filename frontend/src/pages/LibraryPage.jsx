@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Button, Stack, Chip, Grid, Card, CardContent, Divider, CircularProgress } from '@mui/material';
-import { Link as RouterLink } from 'react-router-dom';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import { fetchJson } from '../utils/api';
+import React, { useEffect, useState } from 'react';
+import { ArrowRight, BookOpenCheck, Globe, Lock, Plus, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { fetchJson } from '@/utils/api';
 
 export default function LibraryPage() {
   const [studySets, setStudySets] = useState([]);
@@ -14,46 +16,88 @@ export default function LibraryPage() {
       .catch(() => { setLoading(false); });
   }, []);
 
-  if (loading) return <CircularProgress color="primary" />;
+  if (loading) {
+    return (
+      <div className="surface-panel flex min-h-[50vh] items-center justify-center rounded-[32px]">
+        <div className="text-sm font-medium text-muted-foreground">Loading your study sets...</div>
+      </div>
+    );
+  }
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-        <Box>
-          <Typography variant="h3" sx={{ mb: 1 }}>My Library</Typography>
-          <Typography color="text.secondary">You have {studySets.length} saved study {studySets.length === 1 ? 'set' : 'sets'}.</Typography>
-        </Box>
-      </Stack>
+    <div className="space-y-6">
+      <section className="surface-panel rounded-[36px] p-6 sm:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-3">
+            <Badge variant="secondary">My library</Badge>
+            <div>
+              <h1 className="font-display text-4xl sm:text-5xl">Study sets you can actually return to.</h1>
+              <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
+                You have {studySets.length} saved study {studySets.length === 1 ? 'set' : 'sets'}. Pick one up where you left off
+                or generate a new deck in a few clicks.
+              </p>
+            </div>
+          </div>
+          <Link to="/create">
+            <Button size="lg" variant="secondary">
+              <Plus className="h-4 w-4" />
+              Create a deck
+            </Button>
+          </Link>
+        </div>
+      </section>
 
       {!studySets.length ? (
-        <Paper elevation={0} sx={{ p: 8, textAlign: 'center', borderRadius: 8, bgcolor: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)' }}>
-          <LibraryBooksIcon sx={{ fontSize: 64, color: 'text.secondary', opacity: 0.5, mb: 2 }} />
-          <Typography variant="h5" sx={{ mb: 1 }}>No study sets yet</Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>Generate your first deck using AI to start learning.</Typography>
-          <Button component={RouterLink} to="/create" variant="contained" color="secondary">Create First Set</Button>
-        </Paper>
+        <Card className="rounded-[36px] border-dashed">
+          <CardContent className="flex flex-col items-center px-6 py-16 text-center">
+            <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-[24px] bg-primary/10 text-primary">
+              <BookOpenCheck className="h-8 w-8" />
+            </div>
+            <h2 className="text-2xl font-semibold">Your library is empty</h2>
+            <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
+              Start with an AI draft, clean it up, and save it here for repeat study sessions.
+            </p>
+            <Link className="mt-6" to="/create">
+              <Button variant="secondary">Create your first set</Button>
+            </Link>
+          </CardContent>
+        </Card>
       ) : (
-        <Grid container spacing={3}>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {studySets.map(set => (
-            <Grid item xs={12} sm={6} lg={4} key={set.id}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', transition: 'all 0.2s', '&:hover': { borderColor: 'primary.main', transform: 'translateY(-4px)' } }}>
-                <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                  <Typography variant="h5" sx={{ mb: 1 }}>{set.title}</Typography>
-                  <Typography color="text.secondary" sx={{ mb: 3, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{set.description}</Typography>
-                  <Stack direction="row" spacing={1} sx={{ mt: 'auto' }}>
-                    <Chip size="small" label={`${set.flashcardCount} cards`} sx={{ bgcolor: 'rgba(255,255,255,0.1)' }} />
-                    <Chip size="small" label={set.visibility} color={set.visibility === 'PUBLIC' ? 'success' : 'default'} variant="outlined" />
-                  </Stack>
-                </CardContent>
-                <Divider />
-                <Box sx={{ p: 2 }}>
-                  <Button component={RouterLink} to={`/study-set/${set.id}`} variant="contained" fullWidth>Study Now</Button>
-                </Box>
-              </Card>
-            </Grid>
+            <Card className="rounded-[32px] transition hover:-translate-y-1" key={set.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-2xl">{set.title}</CardTitle>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                      {set.description || 'No description yet. Open the deck to start reviewing it.'}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-muted p-3 text-muted-foreground">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="outline">{set.flashcardCount} cards</Badge>
+                  <Badge variant={set.visibility === 'PUBLIC' ? 'accent' : 'secondary'}>
+                    {set.visibility === 'PUBLIC' ? <Globe className="mr-1 h-3.5 w-3.5" /> : <Lock className="mr-1 h-3.5 w-3.5" />}
+                    {set.visibility}
+                  </Badge>
+                </div>
+                <Link to={`/study-set/${set.id}`}>
+                  <Button className="w-full">
+                    Study now
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, Stack, TextField, Alert } from '@mui/material';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AuthLayout from '../components/AuthLayout';
-import { fetchJson } from '../utils/api';
+import AuthLayout from '@/components/AuthLayout';
+import { Alert } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { fetchJson } from '@/utils/api';
 
 export default function RegisterPage({ session, onSessionChange }) {
   const navigate = useNavigate();
@@ -22,15 +25,35 @@ export default function RegisterPage({ session, onSessionChange }) {
   }
 
   return (
-    <AuthLayout title="Create Account" alternateText="Already have an account?" alternateAction="Log in" alternateTo="/login">
-      <Box component="form" onSubmit={handleSubmit}>
-        <Stack spacing={3}>
-          <TextField label="Username" name="username" fullWidth required />
-          <TextField label="Password" name="password" type="password" fullWidth required inputProps={{ minLength: 8 }} helperText="Minimum 8 characters" />
-          {status && <Alert severity={status.type}>{status.message}</Alert>}
-          <Button type="submit" variant="contained" color="primary" size="large" fullWidth>Sign Up</Button>
-        </Stack>
-      </Box>
+    <AuthLayout
+      alternateAction="sign in instead."
+      alternateText="Already registered?"
+      alternateTo="/login"
+      description="Create an account to save decks, manage your library, and study anywhere."
+      eyebrow="Register"
+      title="Create your account"
+    >
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        <Field label="Username" name="username" />
+        <div className="space-y-2">
+          <Label>Password</Label>
+          <Input minLength={8} name="password" required type="password" />
+          <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Minimum 8 characters</p>
+        </div>
+        {status ? <Alert tone={status.type === 'error' ? 'error' : 'info'}>{status.message}</Alert> : null}
+        <Button className="w-full" size="lg" type="submit">
+          Sign up
+        </Button>
+      </form>
     </AuthLayout>
+  );
+}
+
+function Field({ label, ...props }) {
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Input {...props} required />
+    </div>
   );
 }
