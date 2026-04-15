@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, IconButton, LinearProgress, MenuItem, Pagination, Stack, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, Chip, Divider, IconButton, LinearProgress, MenuItem, Pagination, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
 import ArrowOutwardRounded from '@mui/icons-material/ArrowOutwardRounded'
 import BookmarkAddedRounded from '@mui/icons-material/BookmarkAddedRounded'
@@ -12,7 +12,7 @@ import SectionHeading from '../components/SectionHeading'
 
 const PAGE_SIZE = 4
 
-function LibraryDeckItem({ studySet, showDelete = false, deleting = false, onDelete }) {
+function LibraryDeckItem({ studySet, showDelete = false, deleting = false, updatingVisibility = false, onDelete, onToggleVisibility }) {
   return (
     <Card
       sx={{
@@ -26,23 +26,60 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, onDel
         <Stack spacing={2}>
           <Stack direction="row" spacing={1.5} alignItems="flex-start">
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-              <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap" sx={{ mb: 1 }}>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1, width: '100%' }}>
                 <Typography
                   variant="subtitle1"
                   sx={{
                     fontWeight: 600,
                     color: 'text.primary',
                     minWidth: 0,
+                    flexShrink: 1,
                   }}
                 >
                   {studySet.title}
                 </Typography>
-                <Chip
-                  size="small"
-                  label={studySet.visibility}
-                  color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'}
-                  variant="outlined"
-                />
+                <Box sx={{ flexGrow: 1 }} />
+                {showDelete ? (
+                  <ToggleButtonGroup
+                    exclusive
+                    size="small"
+                    value={studySet.visibility}
+                    onChange={(_, nextVisibility) => {
+                      if (!nextVisibility || nextVisibility === studySet.visibility) {
+                        return
+                      }
+                      onToggleVisibility?.(studySet)
+                    }}
+                    disabled={updatingVisibility || deleting}
+                    sx={{
+                      '& .MuiToggleButton-root': {
+                        px: 1.5,
+                        py: 0.5,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        color: 'primary.main',
+                        borderColor: 'primary.main',
+                      },
+                      '& .MuiToggleButton-root.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                      },
+                      '& .MuiToggleButton-root.Mui-selected:hover': {
+                        bgcolor: 'primary.dark',
+                      },
+                      '& .MuiToggleButtonGroup-grouped:not(:first-of-type)': {
+                        borderLeftColor: 'primary.main',
+                      },
+                    }}
+                  >
+                    <ToggleButton value="PRIVATE">
+                      Private
+                    </ToggleButton>
+                    <ToggleButton value="PUBLIC">
+                      {updatingVisibility ? 'Saving...' : 'Public'}
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                ) : null}
               </Stack>
               <Typography
                 color="text.secondary"
@@ -58,22 +95,6 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, onDel
                 {studySet.description || 'No description provided.'}
               </Typography>
             </Box>
-            {showDelete ? (
-              <IconButton
-                color="error"
-                aria-label={`delete ${studySet.title}`}
-                onClick={() => onDelete?.(studySet)}
-                disabled={deleting}
-                sx={{
-                  border: '1px solid',
-                  borderColor: 'error.main',
-                  borderRadius: 0,
-                  flexShrink: 0,
-                }}
-              >
-                <DeleteOutlineRounded />
-              </IconButton>
-            ) : null}
           </Stack>
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
@@ -101,23 +122,46 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, onDel
 
           <Divider />
 
-          <Button
-            component={RouterLink}
-            to={`/study-set/${studySet.id}`}
-            variant="text"
-            color="primary"
-            endIcon={<ArrowOutwardRounded />}
-            sx={{ alignSelf: 'flex-start', px: 0 }}
-          >
-            Open Deck
-          </Button>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }}>
+            <Button
+              component={RouterLink}
+              to={`/study-set/${studySet.id}`}
+              variant="text"
+              color="primary"
+              endIcon={<ArrowOutwardRounded />}
+              sx={{ alignSelf: 'flex-start', px: 0 }}
+            >
+              Open Deck
+            </Button>
+
+            <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'block' } }} />
+
+            {showDelete ? (
+              <IconButton
+                color="error"
+                aria-label={`delete ${studySet.title}`}
+                onClick={() => onDelete?.(studySet)}
+                disabled={deleting || updatingVisibility}
+                sx={{
+                  border: '1px solid',
+                  borderColor: 'error.main',
+                  borderRadius: 0,
+                  flexShrink: 0,
+                  alignSelf: { xs: 'flex-start', sm: 'center' },
+                  ml: { sm: 'auto' },
+                }}
+              >
+                <DeleteOutlineRounded />
+              </IconButton>
+            ) : null}
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
   )
 }
 
-function LibraryPane({ title, subtitle, icon, items, emptyLabel, showDelete = false, deletingId = null, onDelete }) {
+function LibraryPane({ title, subtitle, icon, items, emptyLabel, showDelete = false, deletingId = null, updatingVisibilityId = null, onDelete, onToggleVisibility }) {
   const [page, setPage] = useState(1)
   const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE))
   const visiblePage = Math.min(page, pageCount)
@@ -168,7 +212,9 @@ function LibraryPane({ title, subtitle, icon, items, emptyLabel, showDelete = fa
                 studySet={item}
                 showDelete={showDelete}
                 deleting={deletingId === item.id}
+                updatingVisibility={updatingVisibilityId === item.id}
                 onDelete={onDelete}
+                onToggleVisibility={onToggleVisibility}
               />
             ))}
           </Stack>
@@ -221,7 +267,7 @@ function LibraryPane({ title, subtitle, icon, items, emptyLabel, showDelete = fa
   )
 }
 
-export default function LibraryPage({ authUser, mySets, deletingId, loadingSets, onDelete }) {
+export default function LibraryPage({ authUser, mySets, deletingId, updatingVisibilityId, loadingSets, onDelete, onToggleVisibility }) {
   return (
     <Stack spacing={4}>
       <SectionHeading
@@ -239,7 +285,9 @@ export default function LibraryPage({ authUser, mySets, deletingId, loadingSets,
           items={authUser?.authenticated ? mySets : []}
           showDelete={authUser?.authenticated}
           deletingId={deletingId}
+          updatingVisibilityId={updatingVisibilityId}
           onDelete={onDelete}
+          onToggleVisibility={onToggleVisibility}
           emptyLabel={authUser?.authenticated ? 'You have no decks yet.' : 'Sign in to access your library.'}
         />
 

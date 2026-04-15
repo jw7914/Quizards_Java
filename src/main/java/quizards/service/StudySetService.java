@@ -100,6 +100,16 @@ public class StudySetService {
         studySetRepository.delete(studySet);
     }
 
+    public StudySet updateVisibility(UUID studySetId, long ownerId, Visibility visibility) {
+        StudySetEntity studySet = studySetRepository.findById(studySetId)
+                .orElseThrow(() -> new IllegalArgumentException("Study set not found."));
+        if (studySet.getOwner().getId() != ownerId) {
+            throw new AccessDeniedException("You do not have access to this study set.");
+        }
+        studySet.setVisibility(visibility);
+        return toModel(studySetRepository.save(studySet));
+    }
+
     private List<StudySetEntity> prepareSortedStudySets(List<StudySetEntity> studySets) {
         List<StudySetEntity> missingCreatedAt = studySets.stream()
                 .filter(studySet -> studySet.getCreatedAt() == null)

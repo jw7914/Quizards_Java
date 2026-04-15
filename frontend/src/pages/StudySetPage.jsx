@@ -169,15 +169,17 @@ export default function StudySetPage({ authUser }) {
     return <Alert severity="info">Study deck not found.</Alert>
   }
 
-  const flashcards = session?.queue ?? []
   const deckCardType = studySet.deckType ?? 'TEXT'
-  const displayCards = deckCardType === 'QUIZ' ? (quizSession?.queue ?? flashcards) : (studySet.flashcards ?? [])
+  const isQuizDeck = deckCardType === 'QUIZ'
+  const flashcards = studySet.flashcards ?? []
+  const quizQueue = quizSession?.queue ?? []
+  const displayCards = isQuizDeck ? quizQueue : flashcards
   const cardCount = displayCards.length
-  const visibleIndex = deckCardType === 'QUIZ'
+  const visibleIndex = isQuizDeck
     ? Math.min(quizSession?.currentIndex ?? 0, Math.max(cardCount - 1, 0))
     : Math.min(activeIndex, Math.max(cardCount - 1, 0))
   const activeCard = displayCards[visibleIndex]
-  const progressValue = deckCardType === 'QUIZ'
+  const progressValue = isQuizDeck
     ? quizSession?.mode === 'LEITNER'
       ? (((quizSession?.originalCount ?? 0) - (quizSession?.queue?.length ?? 0)) / Math.max(quizSession?.originalCount ?? 1, 1)) * 100
       : quizSession?.mode === 'STREAK'
@@ -187,7 +189,7 @@ export default function StudySetPage({ authUser }) {
       ? ((visibleIndex + 1) / cardCount) * 100
       : 0
   const timeLimitLabel = formatTimeLimit(
-    deckCardType === 'QUIZ' ? (quizSession?.remainingSeconds ?? session?.timeLimitSeconds ?? 0) : 0,
+    isQuizDeck ? (quizSession?.remainingSeconds ?? session?.timeLimitSeconds ?? 0) : 0,
   )
 
   const goToCard = (nextIndex) => {
@@ -196,7 +198,7 @@ export default function StudySetPage({ authUser }) {
     setSelectedChoice('')
   }
 
-  const hasSession = deckCardType === 'QUIZ' ? Boolean(session) : true
+  const hasSession = isQuizDeck ? Boolean(quizSession) : true
   const quizCompleted = Boolean(quizSession?.completed)
 
   const handleQuizAnswer = (choice) => {
@@ -276,6 +278,11 @@ export default function StudySetPage({ authUser }) {
   const handleEndQuizSession = () => {
     setPendingQuizSession(null)
     setSelectedChoice('')
+    if (quizSession?.mode === 'TIMED_QUIZ') {
+      setSession(null)
+      setQuizSession(null)
+      return
+    }
     setQuizSession((current) =>
       current
         ? {
@@ -287,6 +294,17 @@ export default function StudySetPage({ authUser }) {
     )
   }
 
+  const handleRestartSession = () => {
+    if (quizSession?.mode === 'TIMED_QUIZ') {
+      setSession(null)
+      setQuizSession(null)
+      setPendingQuizSession(null)
+      setSelectedChoice('')
+      return
+    }
+    handleStartSession()
+  }
+
   return (
     <Stack spacing={4}>
       <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
@@ -294,11 +312,10 @@ export default function StudySetPage({ authUser }) {
       <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
         <Chip label={studySet.visibility} color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'} variant="outlined" />
         <Chip label={`${studySet.flashcardCount} cards`} icon={<CollectionsBookmarkRounded />} color="primary" />
-        <Chip label={deckCardType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'} variant="outlined" />
-        {deckCardType === 'QUIZ' ? <Chip label={formatMode(session?.mode ?? mode)} variant="outlined" /> : null}
-        {deckCardType === 'QUIZ' && timeLimitLabel ? <Chip label={timeLimitLabel} icon={<TimerOutlined />} variant="outlined" /> : null}
-        {deckCardType === 'QUIZ' && quizSession?.mode !== 'STREAK' ? <Chip label={`${quizSession.correctAnswers} correct`} variant="outlined" /> : null}
-        {deckCardType === 'QUIZ' && quizSession?.mode === 'STREAK' ? <Chip label={`Streak ${quizSession.currentStreak}`} variant="outlined" /> : null}
+        <Chip label={isQuizDeck ? 'Quiz Deck' : 'Flashcards'} variant="outlined" />
+        {isQuizDeck ? <Chip label={formatMode(quizSession?.mode ?? mode)} variant="outlined" /> : null}
+        {isQuizDeck && quizSession?.mode !== 'STREAK' ? <Chip label={`${quizSession?.correctAnswers ?? 0} correct`} variant="outlined" /> : null}
+        {isQuizDeck && quizSession?.mode === 'STREAK' ? <Chip label={`Streak ${quizSession?.currentStreak ?? 0}`} variant="outlined" /> : null}
       </Stack>
 
       <Card sx={{ overflow: 'hidden' }}>
@@ -329,7 +346,7 @@ export default function StudySetPage({ authUser }) {
             <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'block' } }} />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: { xs: '100%', md: 'auto' } }}>
-              {deckCardType === 'QUIZ' ? (
+              {isQuizDeck ? (
                 <TextField
                   select
                   size="small"
@@ -338,8 +355,11 @@ export default function StudySetPage({ authUser }) {
                   onChange={(event) => {
                     setMode(event.target.value)
                     setSession(null)
+                    setQuizSession(null)
+                    setPendingQuizSession(null)
                     setActiveIndex(0)
                     setFlipped(false)
+                    setSelectedChoice('')
                   }}
                   disabled={hasSession && !quizCompleted}
                   sx={{ minWidth: 150 }}
@@ -352,7 +372,7 @@ export default function StudySetPage({ authUser }) {
                 </TextField>
               ) : null}
 
-              {deckCardType === 'QUIZ' && !hasSession && mode === 'TIMED_QUIZ' ? (
+              {isQuizDeck && !hasSession && mode === 'TIMED_QUIZ' ? (
                 <TextField
                   size="small"
                   label="Minutes"
@@ -364,7 +384,47 @@ export default function StudySetPage({ authUser }) {
                 />
               ) : null}
 
-              {hasSession && deckCardType === 'TEXT' ? (
+              {isQuizDeck && quizSession?.mode === 'TIMED_QUIZ' && hasSession && !quizCompleted ? (
+                <Box
+                  sx={{
+                    minWidth: 132,
+                    px: 1.75,
+                    py: 1,
+                    border: '1px solid',
+                    borderColor: quizSession.remainingSeconds <= 30 ? 'error.main' : 'divider',
+                    borderRadius: 2,
+                    bgcolor: quizSession.remainingSeconds <= 30 ? '#fff4f4' : '#f8fbff',
+                  }}
+                >
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <TimerOutlined
+                      color={quizSession.remainingSeconds <= 30 ? 'error' : 'primary'}
+                      sx={{ fontSize: 18 }}
+                    />
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: 'block', lineHeight: 1.1, letterSpacing: '0.06em' }}
+                      >
+                        TIMER
+                      </Typography>
+                      <Typography
+                        sx={{
+                          fontSize: '1.2rem',
+                          fontWeight: 700,
+                          lineHeight: 1.15,
+                          color: quizSession.remainingSeconds <= 30 ? 'error.main' : 'text.primary',
+                        }}
+                      >
+                        {timeLimitLabel}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Box>
+              ) : null}
+
+              {hasSession && !isQuizDeck ? (
                 <TextField
                   select
                   size="small"
@@ -388,7 +448,7 @@ export default function StudySetPage({ authUser }) {
                   {sessionLoading ? 'Starting...' : `Start ${formatMode(mode)}`}
                 </Button>
               ) : null}
-              {deckCardType === 'QUIZ' && hasSession && !quizCompleted ? (
+              {isQuizDeck && hasSession && !quizCompleted ? (
                 <Button variant="outlined" onClick={handleEndQuizSession}>
                   End Session
                 </Button>
@@ -421,15 +481,15 @@ export default function StudySetPage({ authUser }) {
                   Best streak: {quizSession.bestStreak}
                 </Typography>
               ) : null}
-              <Button variant="contained" onClick={handleStartSession}>
-                Restart {formatMode(mode)}
+              <Button variant="contained" onClick={handleRestartSession}>
+                {quizSession.mode === 'TIMED_QUIZ' ? 'Set Time Again' : `Restart ${formatMode(mode)}`}
               </Button>
             </Stack>
           ) : !activeCard ? (
             <Alert severity="info">This deck does not have any flashcards yet.</Alert>
           ) : (
             <>
-              {deckCardType === 'TEXT' ? (
+              {!isQuizDeck ? (
                 <Stack direction="row" spacing={1} justifyContent="center" alignItems="center">
                   <IconButton
                     aria-label="Previous card"
@@ -460,17 +520,17 @@ export default function StudySetPage({ authUser }) {
 
               <Box
                 onClick={() => {
-                  if (!sessionLoading && deckCardType !== 'QUIZ') {
+                  if (!sessionLoading && !isQuizDeck) {
                     setFlipped((current) => !current)
                   }
                 }}
                 sx={{
                   perspective: 1600,
-                  cursor: sessionLoading ? 'progress' : deckCardType === 'QUIZ' ? 'default' : 'pointer',
+                  cursor: sessionLoading ? 'progress' : isQuizDeck ? 'default' : 'pointer',
                   userSelect: 'none',
                 }}
               >
-                {deckCardType === 'QUIZ' ? (
+                {isQuizDeck ? (
                   <Card
                     sx={{
                       minHeight: { xs: 340, md: 420 },

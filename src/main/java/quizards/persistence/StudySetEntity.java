@@ -75,6 +75,10 @@ public class StudySetEntity {
         return visibility;
     }
 
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
     public AppUserEntity getOwner() {
         return owner;
     }

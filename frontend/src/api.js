@@ -80,6 +80,13 @@ export async function deleteStudySet(studySetId) {
   })
 }
 
+export async function updateStudySetVisibility(studySetId, visibility) {
+  return request(`/api/study-sets/${studySetId}/visibility`, {
+    method: 'PATCH',
+    body: JSON.stringify({ visibility }),
+  })
+}
+
 export async function createStudySet(body) {
   return request('/api/study-sets', {
     method: 'POST',

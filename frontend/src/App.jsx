@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, CircularProgress, Container, Stack, Typography } from '@mui/material'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { deleteStudySet, fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, login, logout, register } from './api'
+import { deleteStudySet, fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, login, logout, register, updateStudySetVisibility } from './api'
 
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -21,6 +21,7 @@ export default function App() {
   const [loadingSets, setLoadingSets] = useState(true)
   const [dashboardError, setDashboardError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [updatingVisibilityId, setUpdatingVisibilityId] = useState(null)
   const guestUser = { authenticated: false, id: null, username: null }
 
   const refreshDashboard = useCallback(async (user) => {
@@ -107,6 +108,20 @@ export default function App() {
     }
   }
 
+  const handleToggleStudySetVisibility = async (studySet) => {
+    const nextVisibility = studySet.visibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC'
+    setUpdatingVisibilityId(studySet.id)
+    setDashboardError('')
+    try {
+      await updateStudySetVisibility(studySet.id, nextVisibility)
+      await refreshDashboard(authUser)
+    } catch (error) {
+      setDashboardError(error.message)
+    } finally {
+      setUpdatingVisibilityId(null)
+    }
+  }
+
   if (!authResolved) {
     return (
       <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: 'background.default' }}>
@@ -156,7 +171,9 @@ export default function App() {
                 publicSets={publicSets}
                 mySets={mySets}
                 deletingId={deletingId}
+                updatingVisibilityId={updatingVisibilityId}
                 onDelete={handleDeleteStudySet}
+                onToggleVisibility={handleToggleStudySetVisibility}
               />
             }
           />

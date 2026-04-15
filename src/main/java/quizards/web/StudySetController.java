@@ -20,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -98,6 +99,21 @@ public class StudySetController {
     public void deleteStudySet(@PathVariable UUID studySetId, Authentication authentication) {
         AppUserEntity owner = requireOwner(authentication);
         studySetService.deleteStudySet(studySetId, owner.getId());
+    }
+
+    @PatchMapping("/study-sets/{studySetId}/visibility")
+    public StudySetResponse updateStudySetVisibility(
+            @PathVariable UUID studySetId,
+            @RequestBody UpdateStudySetVisibilityRequest request,
+            Authentication authentication
+    ) {
+        AppUserEntity owner = requireOwner(authentication);
+        StudySet studySet = studySetService.updateVisibility(
+                studySetId,
+                owner.getId(),
+                request.visibility() == null ? Visibility.PRIVATE : request.visibility()
+        );
+        return toResponse(studySet, owner.getUsername());
     }
 
     @PostMapping("/study-sets")
