@@ -21,6 +21,7 @@ export default function App() {
   const [loadingSets, setLoadingSets] = useState(true)
   const [dashboardError, setDashboardError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const guestUser = { authenticated: false, id: null, username: null }
 
   const refreshDashboard = useCallback(async (user) => {
     setLoadingSets(true)
@@ -52,7 +53,8 @@ export default function App() {
         await refreshDashboard(user)
       } catch (error) {
         if (!alive) return
-        setDashboardError(error.message)
+        setAuthUser(guestUser)
+        await refreshDashboard(guestUser)
       } finally {
         if (alive) {
           setAuthResolved(true)

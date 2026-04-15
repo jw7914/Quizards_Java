@@ -2,6 +2,7 @@ package quizards.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,7 +28,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/auth", "/login", "/register", "/create", "/library", "/study-set/**", "/index.html", "/api/auth/**").permitAll()
-                        .requestMatchers("/api/study-sets").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/study-sets", "/api/study-sets/**").permitAll()
                         .requestMatchers("/assets/**", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .anyRequest().authenticated()
                 )
