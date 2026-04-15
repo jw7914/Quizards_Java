@@ -11,7 +11,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,6 +42,9 @@ public class StudySetEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private AppUserEntity owner;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "studySet", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FlashcardEntity> flashcards = new ArrayList<>();
@@ -74,6 +79,14 @@ public class StudySetEntity {
         return owner;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public List<FlashcardEntity> getFlashcards() {
         return flashcards;
     }
@@ -81,5 +94,12 @@ public class StudySetEntity {
     public void addFlashcard(FlashcardEntity flashcard) {
         flashcards.add(flashcard);
         flashcard.setStudySet(this);
+    }
+
+    @PrePersist
+    void assignCreatedAt() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 }

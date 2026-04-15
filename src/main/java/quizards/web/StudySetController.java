@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +58,12 @@ public class StudySetController {
         }
         StudySet studySet = studySetService.getAccessibleStudySet(studySetId, userId);
         return toDetailResponse(studySet);
+    }
+
+    @DeleteMapping("/study-sets/{studySetId}")
+    public void deleteStudySet(@PathVariable UUID studySetId, Authentication authentication) {
+        AppUserEntity owner = requireOwner(authentication);
+        studySetService.deleteStudySet(studySetId, owner.getId());
     }
 
     @PostMapping("/study-sets")

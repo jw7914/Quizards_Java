@@ -10,6 +10,7 @@ import quizards.persistence.FlashcardEntity;
 import quizards.persistence.StudySetEntity;
 import quizards.repository.StudySetRepository;
 import quizards.validation.InputValidator;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -29,13 +30,13 @@ public class StudySetService {
     }
 
     public List<StudySet> findPublicStudySets() {
-        return studySetRepository.findByVisibilityOrderByTitleAsc(Visibility.PUBLIC).stream()
+        return prepareSortedStudySets(studySetRepository.findByVisibility(Visibility.PUBLIC)).stream()
                 .map(this::toModel)
                 .toList();
     }
 
     public List<StudySet> findStudySetsForOwner(long ownerId) {
-        return studySetRepository.findByOwnerIdOrderByTitleAsc(ownerId).stream()
+        return prepareSortedStudySets(studySetRepository.findByOwnerId(ownerId)).stream()
                 .map(this::toModel)
                 .toList();
     }
@@ -80,6 +81,32 @@ public class StudySetService {
             throw new AccessDeniedException("You do not have access to this study set.");
         }
         return studySet;
+    }
+
+    public void deleteStudySet(UUID studySetId, long ownerId) {
+        StudySetEntity studySet = studySetRepository.findById(studySetId)
+                .orElseThrow(() -> new IllegalArgumentException("Study set not found."));
+        if (studySet.getOwner().getId() != ownerId) {
+            throw new AccessDeniedException("You do not have access to this study set.");
+        }
+        studySetRepository.delete(studySet);
+    }
+
+    private List<StudySetEntity> prepareSortedStudySets(List<StudySetEntity> studySets) {
+        List<StudySetEntity> missingCreatedAt = studySets.stream()
+                .filter(studySet -> studySet.getCreatedAt() == null)
+                .toList();
+        if (!missingCreatedAt.isEmpty()) {
+            LocalDateTime fallbackTime = LocalDateTime.now();
+            missingCreatedAt.forEach(studySet -> studySet.setCreatedAt(fallbackTime));
+            studySetRepository.saveAll(missingCreatedAt);
+        }
+
+        return studySets.stream()
+                .sorted(Comparator
+                        .comparing(StudySetEntity::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(StudySetEntity::getTitle, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     private StudySet toModel(StudySetEntity entity) {

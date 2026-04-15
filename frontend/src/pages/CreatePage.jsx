@@ -22,6 +22,7 @@ export default function CreatePage({ authUser, onCreated }) {
   const navigate = useNavigate()
   const [tab, setTab] = useState(0)
   const [manualForm, setManualForm] = useState(initialManualForm)
+  const [aiVisibility, setAiVisibility] = useState('PRIVATE')
   const [manualCards, setManualCards] = useState([createEmptyCard()])
   const [manualCardsOpen, setManualCardsOpen] = useState(false)
   const [manualCardPage, setManualCardPage] = useState(0)
@@ -68,7 +69,7 @@ export default function CreatePage({ authUser, onCreated }) {
   const handleGenerateDraft = async () => {
     setDraftState({ loading: true, error: '', saving: false })
     try {
-      const generated = await generateDraft({ prompt, visibility: manualForm.visibility })
+      const generated = await generateDraft({ prompt, visibility: aiVisibility })
       setDraft(generated)
       setDraftCardPage(0)
       setDraftOpen(true)
@@ -86,7 +87,7 @@ export default function CreatePage({ authUser, onCreated }) {
       const saved = await saveGeneratedStudySet({
         title: draft.title.trim(),
         description: draft.summary.trim() || 'No description provided.',
-        visibility: manualForm.visibility,
+        visibility: aiVisibility,
         flashcards: draft.flashcards,
       })
       await onCreated(authUser)
@@ -104,7 +105,7 @@ export default function CreatePage({ authUser, onCreated }) {
   }
 
   const handleAddManualCard = () => {
-    const currentCard = manualCards[manualCardPage]
+    const currentCard = manualCards[visibleManualCardPage]
     if (!currentCard.prompt.trim() || !currentCard.answer.trim()) {
       setManualState({ loading: false, error: 'Finish the current card before adding another one.', success: '' })
       return
@@ -121,7 +122,13 @@ export default function CreatePage({ authUser, onCreated }) {
       }
 
       const nextCards = current.filter((_, cardIndex) => cardIndex !== index)
-      setManualCardPage((currentPage) => Math.min(currentPage, nextCards.length - 1))
+      setManualCardPage((currentPage) => {
+        if (currentPage > index) {
+          return currentPage - 1
+        }
+
+        return Math.min(currentPage, nextCards.length - 1)
+      })
       return nextCards
     })
   }
@@ -146,7 +153,7 @@ export default function CreatePage({ authUser, onCreated }) {
   }
 
   const handleAddDraftCard = () => {
-    const currentCard = draft?.flashcards?.[draftCardPage]
+    const currentCard = draft?.flashcards?.[visibleDraftCardPage]
     if (!currentCard?.prompt.trim() || !currentCard?.answer.trim()) {
       setDraftState((current) => ({ ...current, error: 'Finish the current card before adding another one.' }))
       return
@@ -170,7 +177,13 @@ export default function CreatePage({ authUser, onCreated }) {
       }
 
       const nextCards = current.flashcards.filter((_, cardIndex) => cardIndex !== index)
-      setDraftCardPage((currentPage) => Math.min(currentPage, nextCards.length - 1))
+      setDraftCardPage((currentPage) => {
+        if (currentPage > index) {
+          return currentPage - 1
+        }
+
+        return Math.min(currentPage, nextCards.length - 1)
+      })
       return {
         ...current,
         flashcards: nextCards,
@@ -182,14 +195,16 @@ export default function CreatePage({ authUser, onCreated }) {
   const hasIncompleteManualCards = manualCards.some(
     (card) => (card.prompt.trim() && !card.answer.trim()) || (!card.prompt.trim() && card.answer.trim()),
   )
-  const activeManualCard = manualCards[manualCardPage] ?? manualCards[0]
+  const visibleManualCardPage = Math.min(manualCardPage, Math.max(manualCards.length - 1, 0))
+  const activeManualCard = manualCards[visibleManualCardPage] ?? manualCards[0]
   const activeManualCardComplete = Boolean(activeManualCard?.prompt.trim() && activeManualCard?.answer.trim())
   const draftCards = draft?.flashcards ?? []
   const completedDraftCards = draftCards.filter((card) => card.prompt.trim() && card.answer.trim()).length
   const hasIncompleteDraftCards = draftCards.some(
     (card) => (card.prompt.trim() && !card.answer.trim()) || (!card.prompt.trim() && card.answer.trim()),
   )
-  const activeDraftCard = draftCards[draftCardPage] ?? draftCards[0]
+  const visibleDraftCardPage = Math.min(draftCardPage, Math.max(draftCards.length - 1, 0))
+  const activeDraftCard = draftCards[visibleDraftCardPage] ?? draftCards[0]
   const activeDraftCardComplete = Boolean(activeDraftCard?.prompt.trim() && activeDraftCard?.answer.trim())
 
   return (
@@ -348,16 +363,16 @@ export default function CreatePage({ authUser, onCreated }) {
               </Alert>
             ) : null}
             <Divider />
-            <Stack spacing={2}>
+            <Stack key={`manual-card-${visibleManualCardPage}-${manualCards.length}`} spacing={2}>
               <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                  Card {manualCardPage + 1} of {manualCards.length}
+                  Card {visibleManualCardPage + 1} of {manualCards.length}
                 </Typography>
                 <Box sx={{ flexGrow: 1 }} />
                 <IconButton
                   color="error"
-                  aria-label={`remove card ${manualCardPage + 1}`}
-                  onClick={() => handleRemoveManualCard(manualCardPage)}
+                  aria-label={`remove card ${visibleManualCardPage + 1}`}
+                  onClick={() => handleRemoveManualCard(visibleManualCardPage)}
                   disabled={manualCards.length === 1}
                   sx={{
                     flexShrink: 0,
@@ -374,7 +389,7 @@ export default function CreatePage({ authUser, onCreated }) {
                 label="Prompt"
                 placeholder="Example: What is the powerhouse of the cell?"
                 value={activeManualCard.prompt}
-                onChange={(event) => handleManualCardChange(manualCardPage, 'prompt', event.target.value)}
+                onChange={(event) => handleManualCardChange(visibleManualCardPage, 'prompt', event.target.value)}
               />
               <TextField
                 fullWidth
@@ -383,7 +398,7 @@ export default function CreatePage({ authUser, onCreated }) {
                 label="Answer"
                 placeholder="Example: The mitochondria."
                 value={activeManualCard.answer}
-                onChange={(event) => handleManualCardChange(manualCardPage, 'answer', event.target.value)}
+                onChange={(event) => handleManualCardChange(visibleManualCardPage, 'answer', event.target.value)}
               />
             </Stack>
           </Stack>
@@ -392,7 +407,7 @@ export default function CreatePage({ authUser, onCreated }) {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
             <Pagination
               count={manualCards.length}
-              page={manualCardPage + 1}
+              page={visibleManualCardPage + 1}
               onChange={(_, page) => setManualCardPage(page - 1)}
               color="primary"
               shape="rounded"
@@ -403,7 +418,7 @@ export default function CreatePage({ authUser, onCreated }) {
               select
               size="small"
               label="Jump To"
-              value={manualCardPage}
+              value={visibleManualCardPage}
               onChange={(event) => setManualCardPage(Number(event.target.value))}
               sx={{ minWidth: 120 }}
             >
@@ -462,17 +477,29 @@ export default function CreatePage({ authUser, onCreated }) {
                   value={draft.summary}
                   onChange={(event) => handleDraftChange('summary', event.target.value)}
                 />
+                <TextField
+                  select
+                  label="Visibility"
+                  helperText="Choose whether the AI-generated deck stays private or appears in the shared library."
+                  variant="outlined"
+                  value={aiVisibility}
+                  onChange={(event) => setAiVisibility(event.target.value)}
+                  sx={{ maxWidth: 260 }}
+                >
+                  <MenuItem value="PRIVATE">Private</MenuItem>
+                  <MenuItem value="PUBLIC">Public</MenuItem>
+                </TextField>
                 <Divider />
-                <Stack spacing={2}>
+                <Stack key={`draft-card-${visibleDraftCardPage}-${draftCards.length}`} spacing={2}>
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                      Card {draftCardPage + 1} of {draftCards.length}
+                      Card {visibleDraftCardPage + 1} of {draftCards.length}
                     </Typography>
                     <Box sx={{ flexGrow: 1 }} />
                     <IconButton
                       color="error"
-                      aria-label={`remove generated card ${draftCardPage + 1}`}
-                      onClick={() => handleRemoveDraftCard(draftCardPage)}
+                      aria-label={`remove generated card ${visibleDraftCardPage + 1}`}
+                      onClick={() => handleRemoveDraftCard(visibleDraftCardPage)}
                       disabled={draftCards.length === 1}
                       sx={{
                         flexShrink: 0,
@@ -488,7 +515,7 @@ export default function CreatePage({ authUser, onCreated }) {
                     fullWidth
                     label="Prompt"
                     value={activeDraftCard?.prompt ?? ''}
-                    onChange={(event) => handleDraftCardChange(draftCardPage, 'prompt', event.target.value)}
+                    onChange={(event) => handleDraftCardChange(visibleDraftCardPage, 'prompt', event.target.value)}
                   />
                   <TextField
                     fullWidth
@@ -496,7 +523,7 @@ export default function CreatePage({ authUser, onCreated }) {
                     minRows={2}
                     label="Answer"
                     value={activeDraftCard?.answer ?? ''}
-                    onChange={(event) => handleDraftCardChange(draftCardPage, 'answer', event.target.value)}
+                    onChange={(event) => handleDraftCardChange(visibleDraftCardPage, 'answer', event.target.value)}
                   />
                 </Stack>
               </Stack>
@@ -507,7 +534,7 @@ export default function CreatePage({ authUser, onCreated }) {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
             <Pagination
               count={Math.max(draftCards.length, 1)}
-              page={draftCardPage + 1}
+              page={visibleDraftCardPage + 1}
               onChange={(_, page) => setDraftCardPage(page - 1)}
               color="primary"
               shape="rounded"
@@ -518,7 +545,7 @@ export default function CreatePage({ authUser, onCreated }) {
               select
               size="small"
               label="Jump To"
-              value={draftCardPage}
+              value={visibleDraftCardPage}
               onChange={(event) => setDraftCardPage(Number(event.target.value))}
               sx={{ minWidth: 120 }}
             >

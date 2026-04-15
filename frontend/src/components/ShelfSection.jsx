@@ -1,7 +1,7 @@
 import { Alert, Box, Card, CardContent, Grid, Stack, Typography } from '@mui/material'
 import StudySetCard from './StudySetCard'
 
-export default function ShelfSection({ title, subtitle, icon, items, emptyLabel }) {
+export default function ShelfSection({ title, subtitle, icon, items, emptyLabel, showDelete = false, deletingId = null, onDelete }) {
   return (
     <Card sx={{ borderLeft: '4px solid #ea4335' }}>
       <CardContent sx={{ p: 4 }}>
@@ -21,7 +21,12 @@ export default function ShelfSection({ title, subtitle, icon, items, emptyLabel 
             <Grid container spacing={3}>
               {items.map((item) => (
                 <Grid item key={item.id} xs={12} sm={6}>
-                  <StudySetCard studySet={item} />
+                  <StudySetCard
+                    studySet={item}
+                    showDelete={showDelete}
+                    deleting={deletingId === item.id}
+                    onDelete={onDelete}
+                  />
                 </Grid>
               ))}
             </Grid>

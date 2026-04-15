@@ -62,6 +62,12 @@ export async function fetchStudySetDetail(studySetId) {
   return request(`/api/study-sets/${studySetId}`)
 }
 
+export async function deleteStudySet(studySetId) {
+  return request(`/api/study-sets/${studySetId}`, {
+    method: 'DELETE',
+  })
+}
+
 export async function createStudySet(body) {
   return request('/api/study-sets', {
     method: 'POST',

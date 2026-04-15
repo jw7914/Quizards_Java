@@ -1,9 +1,10 @@
 import { Button, Card, CardContent, Chip, Divider, Stack, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 
-export default function StudySetCard({ studySet }) {
+export default function StudySetCard({ studySet, showDelete = false, deleting = false, onDelete }) {
   return (
     <Card
       sx={{
@@ -32,9 +33,23 @@ export default function StudySetCard({ studySet }) {
           <Chip icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />} label={`${studySet.flashcardCount} cards`} variant="outlined" />
           {studySet.ownerUsername && <Chip icon={<VisibilityRounded sx={{ fontSize: 16 }} />} label={`by ${studySet.ownerUsername}`} variant="outlined" color="primary" />}
         </Stack>
-        <Button component={RouterLink} to={`/study-set/${studySet.id}`} variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
-          Open Deck
-        </Button>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}>
+          <Button component={RouterLink} to={`/study-set/${studySet.id}`} variant="contained" color="primary" fullWidth>
+            Open Deck
+          </Button>
+          {showDelete ? (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteOutlineRounded />}
+              onClick={() => onDelete?.(studySet)}
+              disabled={deleting}
+              fullWidth
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          ) : null}
+        </Stack>
       </CardContent>
     </Card>
   )

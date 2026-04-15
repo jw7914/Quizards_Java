@@ -11,10 +11,10 @@ import quizards.persistence.StudySetEntity;
 public interface StudySetRepository extends JpaRepository<StudySetEntity, UUID> {
 
     @EntityGraph(attributePaths = {"owner", "flashcards"})
-    List<StudySetEntity> findByVisibilityOrderByTitleAsc(Visibility visibility);
+    List<StudySetEntity> findByVisibility(Visibility visibility);
 
     @EntityGraph(attributePaths = {"owner", "flashcards"})
-    List<StudySetEntity> findByOwnerIdOrderByTitleAsc(Long ownerId);
+    List<StudySetEntity> findByOwnerId(Long ownerId);
 
     @Override
     @EntityGraph(attributePaths = {"owner", "flashcards"})

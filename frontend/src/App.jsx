@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, CircularProgress, Container, Stack, Typography } from '@mui/material'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, login, logout, register } from './api'
+import { deleteStudySet, fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, login, logout, register } from './api'
 
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -20,6 +20,7 @@ export default function App() {
   const [mySets, setMySets] = useState([])
   const [loadingSets, setLoadingSets] = useState(true)
   const [dashboardError, setDashboardError] = useState('')
+  const [deletingId, setDeletingId] = useState(null)
 
   const refreshDashboard = useCallback(async (user) => {
     setLoadingSets(true)
@@ -87,6 +88,23 @@ export default function App() {
     navigate('/')
   }
 
+  const handleDeleteStudySet = async (studySet) => {
+    if (!window.confirm(`Delete "${studySet.title}"? This cannot be undone.`)) {
+      return
+    }
+
+    setDeletingId(studySet.id)
+    setDashboardError('')
+    try {
+      await deleteStudySet(studySet.id)
+      await refreshDashboard(authUser)
+    } catch (error) {
+      setDashboardError(error.message)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   if (!authResolved) {
     return (
       <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: 'background.default' }}>
@@ -135,6 +153,8 @@ export default function App() {
                 loadingSets={loadingSets}
                 publicSets={publicSets}
                 mySets={mySets}
+                deletingId={deletingId}
+                onDelete={handleDeleteStudySet}
               />
             }
           />
