@@ -5,13 +5,14 @@ import LogoutRounded from '@mui/icons-material/LogoutRounded'
 import LockOpenRounded from '@mui/icons-material/LockOpenRounded'
 
 const navItems = [
-  { label: 'Overview', to: '/' },
-  { label: 'Create Deck', to: '/create' },
+  { label: 'Home', to: '/' },
+  { label: 'Create Deck', to: '/create', requiresAuth: true },
   { label: 'Library', to: '/library' },
 ]
 
-export default function TopBar({ authUser, onLogin, onLogout }) {
+export default function Navbar({ authUser, onLogout }) {
   const location = useLocation()
+  const visibleNavItems = navItems.filter((item) => !item.requiresAuth || authUser?.authenticated)
 
   return (
     <AppBar position="sticky" elevation={0} color="inherit">
@@ -40,7 +41,7 @@ export default function TopBar({ authUser, onLogin, onLogout }) {
           </Box>
         </Stack>
         <Stack direction="row" spacing={1} sx={{ display: { xs: 'none', md: 'flex' } }}>
-          {navItems.map((item) => (
+          {visibleNavItems.map((item) => (
             <Button
               key={item.to}
               component={RouterLink}
@@ -59,16 +60,33 @@ export default function TopBar({ authUser, onLogin, onLogout }) {
               label={authUser.username}
               color="primary"
               variant="outlined"
+              sx={{
+                height: 40,
+                '& .MuiChip-label': {
+                  px: 1.5,
+                },
+              }}
             />
-            <IconButton color="inherit" onClick={onLogout} aria-label="log out" sx={{ border: '1px solid #dadce0', borderRadius: 0 }}>
+            <IconButton
+              color="inherit"
+              onClick={onLogout}
+              aria-label="log out"
+              sx={{
+                width: 40,
+                height: 40,
+                border: '1px solid #dadce0',
+                borderRadius: 0,
+              }}
+            >
               <LogoutRounded />
             </IconButton>
           </Stack>
         ) : (
-          <Button startIcon={<LockOpenRounded />} variant="outlined" color="primary" onClick={() => onLogin('login')}>
-            Sign In
+          <Button component={RouterLink} to="/login" startIcon={<LockOpenRounded />} variant="outlined" color="primary">
+            Account
           </Button>
-        )}
+        )
+        }
       </Toolbar>
     </AppBar>
   )

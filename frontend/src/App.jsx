@@ -1,23 +1,21 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, CircularProgress, Container, Stack, Typography } from '@mui/material'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, login, logout, register } from './api'
 
-import TopBar from './components/TopBar'
-import AuthDialog from './components/AuthDialog'
+import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
-import OverviewPage from './pages/OverviewPage'
+import HomePage from './pages/HomePage'
 import LibraryPage from './pages/LibraryPage'
 import CreatePage from './pages/CreatePage'
+import SignInPage from './pages/SignInPage'
+import RegisterPage from './pages/RegisterPage'
 import StudySetPage from './pages/StudySetPage'
 
 export default function App() {
+  const navigate = useNavigate()
   const [authUser, setAuthUser] = useState(null)
   const [authResolved, setAuthResolved] = useState(false)
-  const [authDialogOpen, setAuthDialogOpen] = useState(false)
-  const [authMode, setAuthMode] = useState('login')
-  const [authError, setAuthError] = useState('')
-  const [authSubmitting, setAuthSubmitting] = useState(false)
   const [publicSets, setPublicSets] = useState([])
   const [mySets, setMySets] = useState([])
   const [loadingSets, setLoadingSets] = useState(true)
@@ -68,32 +66,25 @@ export default function App() {
     }
   }, [refreshDashboard])
 
-  const handleOpenAuth = (mode = 'login') => {
-    setAuthMode(mode)
-    setAuthError('')
-    setAuthDialogOpen(true)
+  const handleLogin = async (values) => {
+    const nextUser = await login(values)
+    setAuthUser(nextUser)
+    await refreshDashboard(nextUser)
+    return nextUser
   }
 
-  const handleAuthSubmit = async (values) => {
-    setAuthSubmitting(true)
-    setAuthError('')
-    try {
-      const action = authMode === 'login' ? login : register
-      const nextUser = await action(values)
-      setAuthUser(nextUser)
-      setAuthDialogOpen(false)
-      await refreshDashboard(nextUser)
-    } catch (error) {
-      setAuthError(error.message)
-    } finally {
-      setAuthSubmitting(false)
-    }
+  const handleRegister = async (values) => {
+    const nextUser = await register(values)
+    setAuthUser(nextUser)
+    await refreshDashboard(nextUser)
+    return nextUser
   }
 
   const handleLogout = async () => {
     await logout()
     setAuthUser({ authenticated: false, id: null, username: null })
     await refreshDashboard({ authenticated: false, id: null, username: null })
+    navigate('/')
   }
 
   if (!authResolved) {
@@ -111,22 +102,23 @@ export default function App() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <TopBar authUser={authUser} onLogin={handleOpenAuth} onLogout={handleLogout} />
+      <Navbar authUser={authUser} onLogout={handleLogout} />
       <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 }, flexGrow: 1 }}>
         <Routes>
           <Route
             path="/"
             element={
-              <OverviewPage
+              <HomePage
                 authUser={authUser}
                 loadingSets={loadingSets}
                 dashboardError={dashboardError}
                 publicSets={publicSets}
                 mySets={mySets}
-                onLogin={() => handleOpenAuth('login')}
               />
             }
           />
+          <Route path="/login" element={<SignInPage authUser={authUser} onSubmit={handleLogin} />} />
+          <Route path="/register" element={<RegisterPage authUser={authUser} onSubmit={handleRegister} />} />
           <Route
             path="/create"
             element={
@@ -143,7 +135,6 @@ export default function App() {
                 loadingSets={loadingSets}
                 publicSets={publicSets}
                 mySets={mySets}
-                onLogin={() => handleOpenAuth('login')}
               />
             }
           />
@@ -151,16 +142,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Container>
-      <AuthDialog
-        key={authMode}
-        open={authDialogOpen}
-        mode={authMode}
-        error={authError}
-        submitting={authSubmitting}
-        onClose={() => setAuthDialogOpen(false)}
-        onSwitchMode={setAuthMode}
-        onSubmit={handleAuthSubmit}
-      />
     </Box>
   )
 }

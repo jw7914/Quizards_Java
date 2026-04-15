@@ -62,12 +62,29 @@ public class StudySetController {
     @PostMapping("/study-sets")
     public StudySetResponse createStudySet(@RequestBody CreateStudySetRequest request, Authentication authentication) {
         AppUserEntity owner = requireOwner(authentication);
-        StudySet studySet = studySetService.createStudySet(
-                owner,
-                request.title(),
-                request.description(),
-                request.visibility() == null ? Visibility.PRIVATE : request.visibility()
-        );
+        List<TextFlashcard> flashcards = new ArrayList<>();
+        if (request.flashcards() != null) {
+            request.flashcards().forEach(card -> flashcards.add(new TextFlashcard(
+                    UUID.randomUUID(),
+                    card.prompt(),
+                    card.answer()
+            )));
+        }
+
+        StudySet studySet = flashcards.isEmpty()
+                ? studySetService.createStudySet(
+                        owner,
+                        request.title(),
+                        request.description(),
+                        request.visibility() == null ? Visibility.PRIVATE : request.visibility()
+                )
+                : studySetService.createStudySetFromDraft(
+                        owner,
+                        request.title(),
+                        request.description(),
+                        request.visibility() == null ? Visibility.PRIVATE : request.visibility(),
+                        flashcards
+                );
         return toResponse(studySet, owner.getUsername());
     }
 

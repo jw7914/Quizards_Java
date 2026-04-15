@@ -1,10 +1,13 @@
 import { Button, Grid, LinearProgress, Stack } from '@mui/material'
 import BookmarkAddedRounded from '@mui/icons-material/BookmarkAddedRounded'
+import LockOpenRounded from '@mui/icons-material/LockOpenRounded'
+import PersonAddAltRounded from '@mui/icons-material/PersonAddAltRounded'
 import PublicRounded from '@mui/icons-material/PublicRounded'
+import { Link as RouterLink } from 'react-router-dom'
 import SectionHeading from '../components/SectionHeading'
 import ShelfSection from '../components/ShelfSection'
 
-export default function LibraryPage({ authUser, loadingSets, publicSets, mySets, onLogin }) {
+export default function LibraryPage({ authUser, loadingSets, publicSets, mySets }) {
   return (
     <Stack spacing={4}>
       <SectionHeading
@@ -24,9 +27,14 @@ export default function LibraryPage({ authUser, loadingSets, publicSets, mySets,
             }
           />
           {!authUser?.authenticated && (
-            <Button sx={{ mt: 3 }} variant="outlined" color="primary" onClick={onLogin}>
-              Sign In
-            </Button>
+            <Stack direction="row" spacing={2} sx={{ mt: 3 }}>
+              <Button component={RouterLink} to="/login" variant="outlined" color="primary" startIcon={<LockOpenRounded />}>
+                Login
+              </Button>
+              <Button component={RouterLink} to="/register" variant="text" color="primary" startIcon={<PersonAddAltRounded />}>
+                Register
+              </Button>
+            </Stack>
           )}
         </Grid>
         <Grid item xs={12} lg={6}>

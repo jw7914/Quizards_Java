@@ -1,10 +1,12 @@
 package quizards.web;
 
+import java.util.List;
 import quizards.domain.Visibility;
 
 public record CreateStudySetRequest(
         String title,
         String description,
-        Visibility visibility
+        Visibility visibility,
+        List<FlashcardDraftRequest> flashcards
 ) {
 }
