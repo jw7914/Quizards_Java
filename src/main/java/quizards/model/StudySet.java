@@ -1,5 +1,6 @@
 package quizards.model;
 
+import quizards.domain.FlashcardType;
 import quizards.domain.MasteryLevel;
 import quizards.domain.Visibility;
 import java.util.ArrayList;
@@ -88,6 +89,20 @@ public class StudySet {
         return cards.stream()
                 .sorted(Comparator.comparing(Flashcard::getNextReviewAt))
                 .toList();
+    }
+
+    public FlashcardType getDeckCardType() {
+        if (cards.isEmpty()) {
+            return FlashcardType.TEXT;
+        }
+
+        return cards.stream().allMatch(card -> card.getType() == FlashcardType.QUIZ)
+                ? FlashcardType.QUIZ
+                : FlashcardType.TEXT;
+    }
+
+    public boolean isQuizDeck() {
+        return getDeckCardType() == FlashcardType.QUIZ;
     }
 
     public Set<Long> getSharedWithUserIds() {

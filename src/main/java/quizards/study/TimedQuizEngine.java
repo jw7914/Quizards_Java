@@ -7,7 +7,7 @@ import java.time.Duration;
 
 public class TimedQuizEngine implements StudyEngine {
 
-    private static final Duration DEFAULT_TIME_LIMIT = Duration.ofMinutes(10);
+    public static final Duration DEFAULT_TIME_LIMIT = Duration.ofMinutes(10);
 
     @Override
     public StudyMode mode() {
@@ -16,9 +16,13 @@ public class TimedQuizEngine implements StudyEngine {
 
     @Override
     public StudySession startSession(StudySet studySet) {
+        return startSession(studySet, DEFAULT_TIME_LIMIT);
+    }
+
+    public StudySession startSession(StudySet studySet, Duration timeLimit) {
         if (studySet.getCards().isEmpty()) {
             throw new EmptyDeckException("Cannot start a timed quiz with an empty study set.");
         }
-        return new StudySession(mode(), studySet.getCards(), 0, 0, DEFAULT_TIME_LIMIT);
+        return new StudySession(mode(), studySet.getCards(), 0, 0, timeLimit);
     }
 }

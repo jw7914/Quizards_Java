@@ -3,6 +3,7 @@ package quizards.service;
 import quizards.domain.Visibility;
 import quizards.exception.AccessDeniedException;
 import quizards.model.Flashcard;
+import quizards.model.QuizFlashcard;
 import quizards.model.StudySet;
 import quizards.model.TextFlashcard;
 import quizards.persistence.AppUserEntity;
@@ -11,6 +12,7 @@ import quizards.persistence.StudySetEntity;
 import quizards.repository.StudySetRepository;
 import quizards.validation.InputValidator;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -61,6 +63,7 @@ public class StudySetService {
         flashcards.forEach(flashcard -> studySet.addFlashcard(new FlashcardEntity(
                 flashcard.getPrompt(),
                 flashcard.getAnswer(),
+                serializeChoices(flashcard),
                 flashcard.getType(),
                 flashcard.getMasteryLevel(),
                 flashcard.getNextReviewAt()
@@ -75,12 +78,17 @@ public class StudySetService {
     }
 
     public StudySet getAccessibleStudySet(UUID studySetId, long userId) {
-        StudySet studySet = findById(studySetId)
+        StudySetEntity studySet = studySetRepository.findById(studySetId)
                 .orElseThrow(() -> new IllegalArgumentException("Study set not found."));
-        if (!studySet.canBeViewedBy(userId) && studySet.getVisibility() != Visibility.PUBLIC) {
+
+        boolean isPublic = studySet.getVisibility() == Visibility.PUBLIC;
+        boolean isOwner = userId > 0 && studySet.getOwner().getId() == userId;
+
+        if (!isPublic && !isOwner) {
             throw new AccessDeniedException("You do not have access to this study set.");
         }
-        return studySet;
+
+        return toModel(studySet);
     }
 
     public void deleteStudySet(UUID studySetId, long ownerId) {
@@ -120,11 +128,42 @@ public class StudySetService {
         entity.getFlashcards().stream()
                 .sorted(Comparator.comparing(FlashcardEntity::getNextReviewAt))
                 .forEach(card -> {
-                    TextFlashcard flashcard = new TextFlashcard(card.getId(), card.getPrompt(), card.getAnswer());
+                    Flashcard flashcard;
+                    if (card.getType() == quizards.domain.FlashcardType.QUIZ) {
+                        flashcard = new QuizFlashcard(
+                                card.getId(),
+                                card.getPrompt(),
+                                card.getAnswer(),
+                                deserializeChoices(card.getChoicesData())
+                        );
+                    } else {
+                        flashcard = new TextFlashcard(card.getId(), card.getPrompt(), card.getAnswer());
+                    }
                     flashcard.setMasteryLevel(card.getMasteryLevel());
                     flashcard.setNextReviewAt(card.getNextReviewAt());
                     studySet.addCard(flashcard);
                 });
         return studySet;
+    }
+
+    private String serializeChoices(Flashcard flashcard) {
+        if (flashcard instanceof QuizFlashcard quizFlashcard) {
+            return String.join("\n", quizFlashcard.getChoices());
+        }
+        return null;
+    }
+
+    private List<String> deserializeChoices(String choicesData) {
+        if (choicesData == null || choicesData.isBlank()) {
+            return List.of();
+        }
+
+        List<String> choices = new ArrayList<>();
+        for (String choice : choicesData.split("\\n")) {
+            if (!choice.isBlank()) {
+                choices.add(choice);
+            }
+        }
+        return List.copyOf(choices);
     }
 }

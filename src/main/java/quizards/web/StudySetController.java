@@ -2,13 +2,20 @@ package quizards.web;
 
 import quizards.ai.AIService;
 import quizards.ai.GeneratedDeck;
+import quizards.domain.FlashcardType;
+import quizards.domain.StudyMode;
 import quizards.domain.Visibility;
+import quizards.model.Flashcard;
+import quizards.model.QuizFlashcard;
 import quizards.model.StudySet;
 import quizards.model.TextFlashcard;
 import quizards.service.StudySetService;
+import quizards.service.StudySessionService;
+import quizards.study.StudySession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,11 +33,18 @@ import quizards.service.AuthService;
 public class StudySetController {
 
     private final StudySetService studySetService;
+    private final StudySessionService studySessionService;
     private final AIService aiService;
     private final AuthService authService;
 
-    public StudySetController(StudySetService studySetService, AIService aiService, AuthService authService) {
+    public StudySetController(
+            StudySetService studySetService,
+            StudySessionService studySessionService,
+            AIService aiService,
+            AuthService authService
+    ) {
         this.studySetService = studySetService;
+        this.studySessionService = studySessionService;
         this.aiService = aiService;
         this.authService = authService;
     }
@@ -60,6 +74,26 @@ public class StudySetController {
         return toDetailResponse(studySet);
     }
 
+    @GetMapping("/study-sets/{studySetId}/study-session")
+    public StudySessionResponse getStudySession(
+            @PathVariable UUID studySetId,
+            @RequestParam(defaultValue = "LEITNER") StudyMode mode,
+            @RequestParam(required = false) Integer timeLimitMinutes,
+            Authentication authentication
+    ) {
+        long userId = -1L;
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            userId = requireOwner(authentication).getId();
+        }
+
+        StudySet studySet = studySetService.getAccessibleStudySet(studySetId, userId);
+        if (!studySet.isQuizDeck()) {
+            throw new IllegalArgumentException("Study engines are only available for quiz decks.");
+        }
+        StudySession session = studySessionService.startSession(studySet, mode, timeLimitMinutes);
+        return toStudySessionResponse(studySetId, session);
+    }
+
     @DeleteMapping("/study-sets/{studySetId}")
     public void deleteStudySet(@PathVariable UUID studySetId, Authentication authentication) {
         AppUserEntity owner = requireOwner(authentication);
@@ -69,13 +103,9 @@ public class StudySetController {
     @PostMapping("/study-sets")
     public StudySetResponse createStudySet(@RequestBody CreateStudySetRequest request, Authentication authentication) {
         AppUserEntity owner = requireOwner(authentication);
-        List<TextFlashcard> flashcards = new ArrayList<>();
+        List<Flashcard> flashcards = new ArrayList<>();
         if (request.flashcards() != null) {
-            request.flashcards().forEach(card -> flashcards.add(new TextFlashcard(
-                    UUID.randomUUID(),
-                    card.prompt(),
-                    card.answer()
-            )));
+            request.flashcards().forEach(card -> flashcards.add(toFlashcard(card)));
         }
 
         StudySet studySet = flashcards.isEmpty()
@@ -85,7 +115,7 @@ public class StudySetController {
                         request.description(),
                         request.visibility() == null ? Visibility.PRIVATE : request.visibility()
                 )
-                : studySetService.createStudySetFromDraft(
+                : studySetService.createStudySet(
                         owner,
                         request.title(),
                         request.description(),
@@ -103,23 +133,22 @@ public class StudySetController {
     @PostMapping("/ai/generate-draft")
     public GeneratedDeckResponse generateDraft(@RequestBody GenerateStudySetRequest request, Authentication authentication) {
         requireOwner(authentication);
-        GeneratedDeck generatedDeck = aiService.generateFlashcardsFromPrompt(request.prompt());
+        GeneratedDeck generatedDeck = aiService.generateFlashcardsFromPrompt(
+                request.prompt(),
+                request.cardType() == null ? FlashcardType.TEXT : request.cardType()
+        );
         return toDraftResponse(generatedDeck);
     }
 
     @PostMapping("/ai/save-generated-study-set")
     public StudySetResponse saveGeneratedStudySet(@RequestBody SaveGeneratedStudySetRequest request, Authentication authentication) {
         AppUserEntity owner = requireOwner(authentication);
-        List<TextFlashcard> flashcards = new ArrayList<>();
+        List<Flashcard> flashcards = new ArrayList<>();
         if (request.flashcards() != null) {
-            request.flashcards().forEach(card -> flashcards.add(new TextFlashcard(
-                    UUID.randomUUID(),
-                    card.prompt(),
-                    card.answer()
-            )));
+            request.flashcards().forEach(card -> flashcards.add(toFlashcard(card)));
         }
 
-        StudySet studySet = studySetService.createStudySetFromDraft(
+        StudySet studySet = studySetService.createStudySet(
                 owner,
                 request.title(),
                 request.description(),
@@ -142,6 +171,7 @@ public class StudySetController {
                 studySet.getTitle(),
                 studySet.getDescription(),
                 studySet.getVisibility(),
+                studySet.getDeckCardType(),
                 null,
                 studySet.getCards().size()
         );
@@ -153,6 +183,7 @@ public class StudySetController {
                 studySet.getTitle(),
                 studySet.getDescription(),
                 studySet.getVisibility(),
+                studySet.getDeckCardType(),
                 ownerUsername,
                 studySet.getCards().size()
         );
@@ -164,7 +195,12 @@ public class StudySetController {
                 generatedDeck.summary(),
                 generatedDeck.keyTakeaways(),
                 generatedDeck.flashcards().stream()
-                        .map(card -> new FlashcardDraftResponse(card.getPrompt(), card.getAnswer()))
+                        .map(card -> new FlashcardDraftResponse(
+                                card.getPrompt(),
+                                card.getAnswer(),
+                                card.getType(),
+                                card instanceof QuizFlashcard quizFlashcard ? quizFlashcard.getChoices() : List.of()
+                        ))
                         .toList()
         );
     }
@@ -175,16 +211,67 @@ public class StudySetController {
                 studySet.getTitle(),
                 studySet.getDescription(),
                 studySet.getVisibility(),
+                studySet.getDeckCardType(),
                 studySet.getCards().size(),
                 studySet.getCards().stream()
                         .map(card -> new FlashcardResponse(
                                 card.getId(),
                                 card.getPrompt(),
                                 card.getAnswer(),
+                                card instanceof QuizFlashcard quizFlashcard ? quizFlashcard.getChoices() : List.of(),
                                 card.getType(),
                                 card.getMasteryLevel()
                         ))
                         .toList()
+        );
+    }
+
+    private StudySessionResponse toStudySessionResponse(UUID studySetId, StudySession session) {
+        return new StudySessionResponse(
+                studySetId,
+                session.mode(),
+                session.currentIndex(),
+                session.correctAnswers(),
+                session.timeLimit().toSeconds(),
+                session.queue().size(),
+                session.queue().stream()
+                        .map(this::toStudySessionCardResponse)
+                        .toList()
+        );
+    }
+
+    private StudySessionCardResponse toStudySessionCardResponse(Flashcard card) {
+        return new StudySessionCardResponse(
+                card.getId(),
+                card.getPrompt(),
+                card.getAnswer(),
+                card instanceof QuizFlashcard quizFlashcard ? quizFlashcard.getChoices() : List.of(),
+                card.getType(),
+                card.getMasteryLevel()
+        );
+    }
+
+    private Flashcard toFlashcard(FlashcardDraftRequest card) {
+        FlashcardType type = card.type() == null ? FlashcardType.TEXT : card.type();
+        if (type == FlashcardType.QUIZ) {
+            List<String> choices = card.choices() == null
+                    ? List.of()
+                    : card.choices().stream()
+                            .map(choice -> choice == null ? "" : choice.trim())
+                            .filter(choice -> !choice.isBlank())
+                            .collect(Collectors.toList());
+            return new QuizFlashcard(
+                    UUID.randomUUID(),
+                    card.prompt(),
+                    card.answer(),
+                    choices
+            );
+        }
+
+        return new TextFlashcard(
+                UUID.randomUUID(),
+                card.prompt(),
+                card.answer()
         );
     }
 }

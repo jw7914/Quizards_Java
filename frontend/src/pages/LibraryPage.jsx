@@ -83,6 +83,11 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, onDel
               size="small"
               variant="outlined"
             />
+            <Chip
+              label={studySet.deckType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'}
+              size="small"
+              variant="outlined"
+            />
             {studySet.ownerUsername ? (
               <Chip
                 icon={<VisibilityRounded sx={{ fontSize: 16 }} />}

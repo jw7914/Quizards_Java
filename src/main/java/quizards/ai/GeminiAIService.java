@@ -12,13 +12,16 @@ import dev.langchain4j.service.UserMessage;
 import java.util.List;
 import java.util.UUID;
 import quizards.exception.AIProviderException;
+import quizards.domain.FlashcardType;
 import quizards.model.Flashcard;
+import quizards.model.QuizFlashcard;
 import quizards.model.TextFlashcard;
 
 public class GeminiAIService implements AIService {
 
     private final QuizardsSummaryAssistant summaryAssistant;
-    private final QuizardsDeckAssistant deckAssistant;
+    private final QuizardsTextDeckAssistant textDeckAssistant;
+    private final QuizardsQuizDeckAssistant quizDeckAssistant;
 
     public GeminiAIService(String apiKey) {
         ChatModel chatModel = GoogleAiGeminiChatModel.builder()
@@ -29,7 +32,8 @@ public class GeminiAIService implements AIService {
                 .build();
 
         this.summaryAssistant = AiServices.create(QuizardsSummaryAssistant.class, chatModel);
-        this.deckAssistant = AiServices.create(QuizardsDeckAssistant.class, chatModel);
+        this.textDeckAssistant = AiServices.create(QuizardsTextDeckAssistant.class, chatModel);
+        this.quizDeckAssistant = AiServices.create(QuizardsQuizDeckAssistant.class, chatModel);
     }
 
     @Override
@@ -44,7 +48,7 @@ public class GeminiAIService implements AIService {
 
     @Override
     public GeneratedDeck generateFlashcardsFromNotes(String notes) {
-        return generateDeck("""
+        return generateTextDeck("""
                 Create a study set from the student's notes.
                 Focus on the important concepts, definitions, and likely review questions.
 
@@ -54,13 +58,13 @@ public class GeminiAIService implements AIService {
     }
 
     @Override
-    public GeneratedDeck generateFlashcardsFromPrompt(String prompt) {
-        return generateDeck(prompt);
+    public GeneratedDeck generateFlashcardsFromPrompt(String prompt, FlashcardType cardType) {
+        return cardType == FlashcardType.QUIZ ? generateQuizDeck(prompt) : generateTextDeck(prompt);
     }
 
-    private GeneratedDeck generateDeck(String prompt) {
+    private GeneratedDeck generateTextDeck(String prompt) {
         try {
-            StudySetDraft draft = deckAssistant.generate(prompt);
+            StudySetDraft draft = textDeckAssistant.generate(prompt);
             List<Flashcard> flashcards = draft.flashcards().stream()
                     .map(card -> new TextFlashcard(UUID.randomUUID(), card.prompt(), card.answer()))
                     .map(Flashcard.class::cast)
@@ -78,6 +82,29 @@ public class GeminiAIService implements AIService {
             );
         } catch (RuntimeException exception) {
             throw new AIProviderException("Unable to generate a study set with Gemini via LangChain4j.", exception);
+        }
+    }
+
+    private GeneratedDeck generateQuizDeck(String prompt) {
+        try {
+            QuizStudySetDraft draft = quizDeckAssistant.generate(prompt);
+            List<Flashcard> flashcards = draft.flashcards().stream()
+                    .map(card -> new QuizFlashcard(UUID.randomUUID(), card.prompt(), card.answer(), card.choices()))
+                    .map(Flashcard.class::cast)
+                    .toList();
+
+            if (flashcards.isEmpty()) {
+                throw new AIProviderException("Gemini returned no quiz flashcards.");
+            }
+
+            return new GeneratedDeck(
+                    draft.title(),
+                    draft.summary(),
+                    draft.keyTakeaways(),
+                    flashcards
+            );
+        } catch (RuntimeException exception) {
+            throw new AIProviderException("Unable to generate a quiz study set with Gemini via LangChain4j.", exception);
         }
     }
 
@@ -102,7 +129,7 @@ public class GeminiAIService implements AIService {
             Build study sets that match the student's topic or notes.
             The deck should be accurate, concise, and useful for active recall.
             """)
-    interface QuizardsDeckAssistant {
+    interface QuizardsTextDeckAssistant {
 
         @UserMessage("""
                 Generate a study set from the student's request or notes below.
@@ -112,6 +139,24 @@ public class GeminiAIService implements AIService {
                 {{prompt}}
                 """)
         StudySetDraft generate(String prompt);
+    }
+
+    @SystemMessage("""
+            You are Quizards, an educational study assistant.
+            Build multiple-choice study sets that match the student's topic or notes.
+            Each quiz card must have exactly four answer choices with one correct answer.
+            Keep the deck accurate, concise, and useful for practice.
+            """)
+    interface QuizardsQuizDeckAssistant {
+
+        @UserMessage("""
+                Generate a multiple-choice study set from the student's request or notes below.
+                Include a short title, a brief summary, 3 to 5 key takeaways, and 4 to 8 quiz cards.
+                Every quiz card must have a prompt, exactly four choices, and the correct answer must exactly match one of the choices.
+
+                {{prompt}}
+                """)
+        QuizStudySetDraft generate(String prompt);
     }
 
     @Description("A concise notes summary for the student.")
@@ -150,6 +195,42 @@ public class GeminiAIService implements AIService {
 
             @JsonProperty(required = true)
             @Description("The flashcard answer.")
+            String answer
+    ) {
+    }
+
+    @Description("A generated multiple-choice study set draft.")
+    record QuizStudySetDraft(
+            @JsonProperty(required = true)
+            @Description("A short study set title.")
+            String title,
+
+            @JsonProperty(required = true)
+            @Description("A 1 to 2 sentence topic summary.")
+            String summary,
+
+            @JsonProperty(required = true)
+            @Description("Three to five important takeaways from the topic.")
+            List<String> keyTakeaways,
+
+            @JsonProperty(required = true)
+            @Description("Four to eight multiple-choice cards for student review.")
+            List<QuizFlashcardDraft> flashcards
+    ) {
+    }
+
+    @Description("A single multiple-choice flashcard draft.")
+    record QuizFlashcardDraft(
+            @JsonProperty(required = true)
+            @Description("The quiz question.")
+            String prompt,
+
+            @JsonProperty(required = true)
+            @Description("Exactly four choices with one correct answer included.")
+            List<String> choices,
+
+            @JsonProperty(required = true)
+            @Description("The correct answer text. It must match one of the choices exactly.")
             String answer
     ) {
     }

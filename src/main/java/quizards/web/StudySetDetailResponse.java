@@ -2,6 +2,7 @@ package quizards.web;
 
 import java.util.List;
 import java.util.UUID;
+import quizards.domain.FlashcardType;
 import quizards.domain.Visibility;
 
 public record StudySetDetailResponse(
@@ -9,6 +10,7 @@ public record StudySetDetailResponse(
         String title,
         String description,
         Visibility visibility,
+        FlashcardType deckType,
         int flashcardCount,
         List<FlashcardResponse> flashcards
 ) {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, InputAdornment, MenuItem, Pagination, Stack, Tab, Tabs, TextField, Typography } from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, InputAdornment, MenuItem, Pagination, Stack, Tab, Tabs, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import AutoAwesomeRounded from '@mui/icons-material/AutoAwesomeRounded'
 import AddRounded from '@mui/icons-material/AddRounded'
@@ -11,23 +11,103 @@ const initialManualForm = {
   title: '',
   description: '',
   visibility: 'PRIVATE',
+  cardType: 'TEXT',
 }
 
-const createEmptyCard = () => ({
+const createEmptyCard = (type = 'TEXT') => ({
+  type,
   prompt: '',
   answer: '',
+  choices: ['', '', '', ''],
+  correctChoiceIndex: 0,
 })
+
+function trimChoices(choices = []) {
+  return choices.map((choice) => choice.trim())
+}
+
+function getCardPayload(card) {
+  if (card.type === 'QUIZ') {
+    const trimmedChoices = trimChoices(card.choices)
+    return {
+      type: 'QUIZ',
+      prompt: card.prompt.trim(),
+      answer: trimmedChoices[card.correctChoiceIndex] ?? '',
+      choices: trimmedChoices,
+    }
+  }
+
+  return {
+    type: 'TEXT',
+    prompt: card.prompt.trim(),
+    answer: card.answer.trim(),
+    choices: [],
+  }
+}
+
+function isCardComplete(card) {
+  if (!card) return false
+
+  if (card.type === 'QUIZ') {
+    const trimmedPrompt = card.prompt.trim()
+    const trimmedChoices = trimChoices(card.choices)
+    return Boolean(trimmedPrompt && trimmedChoices.every((choice) => choice))
+  }
+
+  return Boolean(card.prompt.trim() && card.answer.trim())
+}
+
+function hasPartialCard(card) {
+  if (!card) return false
+
+  if (card.type === 'QUIZ') {
+    const trimmedPrompt = card.prompt.trim()
+    const trimmedChoices = trimChoices(card.choices)
+    const filledChoices = trimmedChoices.filter(Boolean).length
+    return Boolean(trimmedPrompt || filledChoices > 0)
+      && !(trimmedPrompt && trimmedChoices.every((choice) => choice))
+  }
+
+  const trimmedPrompt = card.prompt.trim()
+  const trimmedAnswer = card.answer.trim()
+  return (trimmedPrompt && !trimmedAnswer) || (!trimmedPrompt && trimmedAnswer)
+}
+
+function normalizeDraftCard(card, fallbackType = 'TEXT') {
+  const type = card.type ?? fallbackType
+  const fallbackQuizChoices = [
+    card.answer ?? '',
+    'Option 2',
+    'Option 3',
+    'Option 4',
+  ]
+  const choices = type === 'QUIZ'
+    ? [...((card.choices?.length ? card.choices : fallbackQuizChoices) ?? []), '', '', '', ''].slice(0, 4)
+    : ['', '', '', '']
+  const correctChoiceIndex = type === 'QUIZ'
+    ? Math.max(0, choices.findIndex((choice) => choice === card.answer))
+    : 0
+
+  return {
+    type,
+    prompt: card.prompt ?? '',
+    answer: card.answer ?? '',
+    choices,
+    correctChoiceIndex,
+  }
+}
 
 export default function CreatePage({ authUser, onCreated }) {
   const navigate = useNavigate()
   const [tab, setTab] = useState(0)
   const [manualForm, setManualForm] = useState(initialManualForm)
   const [aiVisibility, setAiVisibility] = useState('PRIVATE')
-  const [manualCards, setManualCards] = useState([createEmptyCard()])
+  const [manualCards, setManualCards] = useState([createEmptyCard(initialManualForm.cardType)])
   const [manualCardsOpen, setManualCardsOpen] = useState(false)
   const [manualCardPage, setManualCardPage] = useState(0)
   const [manualState, setManualState] = useState({ loading: false, error: '', success: '' })
   const [prompt, setPrompt] = useState('')
+  const [aiCardType, setAiCardType] = useState('TEXT')
   const [draft, setDraft] = useState(null)
   const [draftOpen, setDraftOpen] = useState(false)
   const [draftCardPage, setDraftCardPage] = useState(0)
@@ -35,11 +115,8 @@ export default function CreatePage({ authUser, onCreated }) {
 
   const createTemplate = async () => {
     const sanitizedCards = manualCards
-      .map((card) => ({
-        prompt: card.prompt.trim(),
-        answer: card.answer.trim(),
-      }))
-      .filter((card) => card.prompt || card.answer)
+      .map(getCardPayload)
+      .filter((card) => card.prompt || card.answer || card.choices.some(Boolean))
 
     if (sanitizedCards.length === 0) {
       setManualState({ loading: false, error: 'Add at least one flashcard before creating the deck.', success: '' })
@@ -69,8 +146,12 @@ export default function CreatePage({ authUser, onCreated }) {
   const handleGenerateDraft = async () => {
     setDraftState({ loading: true, error: '', saving: false })
     try {
-      const generated = await generateDraft({ prompt, visibility: aiVisibility })
-      setDraft(generated)
+      const generated = await generateDraft({ prompt, visibility: aiVisibility, cardType: aiCardType })
+      setDraft({
+        ...generated,
+        cardType: aiCardType,
+        flashcards: (generated.flashcards ?? []).map((card) => normalizeDraftCard(card, aiCardType)),
+      })
       setDraftCardPage(0)
       setDraftOpen(true)
       setDraftState({ loading: false, error: '', saving: false })
@@ -88,7 +169,7 @@ export default function CreatePage({ authUser, onCreated }) {
         title: draft.title.trim(),
         description: draft.summary.trim() || 'No description provided.',
         visibility: aiVisibility,
-        flashcards: draft.flashcards,
+        flashcards: draft.flashcards.map(getCardPayload),
       })
       await onCreated(authUser)
       navigate(`/study-set/${saved.id}`)
@@ -104,14 +185,30 @@ export default function CreatePage({ authUser, onCreated }) {
     setManualState((current) => (current.error === 'Finish the current card before adding another one.' ? { ...current, error: '' } : current))
   }
 
+  const handleManualChoiceChange = (index, choiceIndex, value) => {
+    setManualCards((current) =>
+      current.map((card, cardIndex) =>
+        cardIndex === index
+          ? {
+              ...card,
+              choices: card.choices.map((choice, currentChoiceIndex) =>
+                currentChoiceIndex === choiceIndex ? value : choice,
+              ),
+            }
+          : card,
+      ),
+    )
+    setManualState((current) => (current.error === 'Finish the current card before adding another one.' ? { ...current, error: '' } : current))
+  }
+
   const handleAddManualCard = () => {
     const currentCard = manualCards[visibleManualCardPage]
-    if (!currentCard.prompt.trim() || !currentCard.answer.trim()) {
+    if (!isCardComplete(currentCard)) {
       setManualState({ loading: false, error: 'Finish the current card before adding another one.', success: '' })
       return
     }
 
-    setManualCards((current) => [...current, createEmptyCard()])
+    setManualCards((current) => [...current, createEmptyCard(manualForm.cardType)])
     setManualCardPage(manualCards.length)
   }
 
@@ -152,9 +249,30 @@ export default function CreatePage({ authUser, onCreated }) {
     setDraftState((current) => (current.error === 'Finish the current card before adding another one.' ? { ...current, error: '' } : current))
   }
 
+  const handleDraftChoiceChange = (index, choiceIndex, value) => {
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            flashcards: current.flashcards.map((card, cardIndex) =>
+              cardIndex === index
+                ? {
+                    ...card,
+                    choices: card.choices.map((choice, currentChoiceIndex) =>
+                      currentChoiceIndex === choiceIndex ? value : choice,
+                    ),
+                  }
+                : card,
+            ),
+          }
+        : current,
+    )
+    setDraftState((current) => (current.error === 'Finish the current card before adding another one.' ? { ...current, error: '' } : current))
+  }
+
   const handleAddDraftCard = () => {
     const currentCard = draft?.flashcards?.[visibleDraftCardPage]
-    if (!currentCard?.prompt.trim() || !currentCard?.answer.trim()) {
+    if (!isCardComplete(currentCard)) {
       setDraftState((current) => ({ ...current, error: 'Finish the current card before adding another one.' }))
       return
     }
@@ -163,7 +281,7 @@ export default function CreatePage({ authUser, onCreated }) {
       current
         ? {
             ...current,
-            flashcards: [...current.flashcards, createEmptyCard()],
+            flashcards: [...current.flashcards, createEmptyCard(current.cardType ?? aiCardType)],
           }
         : current,
     )
@@ -191,21 +309,17 @@ export default function CreatePage({ authUser, onCreated }) {
     })
   }
 
-  const completedManualCards = manualCards.filter((card) => card.prompt.trim() && card.answer.trim()).length
-  const hasIncompleteManualCards = manualCards.some(
-    (card) => (card.prompt.trim() && !card.answer.trim()) || (!card.prompt.trim() && card.answer.trim()),
-  )
+  const completedManualCards = manualCards.filter(isCardComplete).length
+  const hasIncompleteManualCards = manualCards.some(hasPartialCard)
   const visibleManualCardPage = Math.min(manualCardPage, Math.max(manualCards.length - 1, 0))
   const activeManualCard = manualCards[visibleManualCardPage] ?? manualCards[0]
-  const activeManualCardComplete = Boolean(activeManualCard?.prompt.trim() && activeManualCard?.answer.trim())
+  const activeManualCardComplete = isCardComplete(activeManualCard)
   const draftCards = draft?.flashcards ?? []
-  const completedDraftCards = draftCards.filter((card) => card.prompt.trim() && card.answer.trim()).length
-  const hasIncompleteDraftCards = draftCards.some(
-    (card) => (card.prompt.trim() && !card.answer.trim()) || (!card.prompt.trim() && card.answer.trim()),
-  )
+  const completedDraftCards = draftCards.filter(isCardComplete).length
+  const hasIncompleteDraftCards = draftCards.some(hasPartialCard)
   const visibleDraftCardPage = Math.min(draftCardPage, Math.max(draftCards.length - 1, 0))
   const activeDraftCard = draftCards[visibleDraftCardPage] ?? draftCards[0]
-  const activeDraftCardComplete = Boolean(activeDraftCard?.prompt.trim() && activeDraftCard?.answer.trim())
+  const activeDraftCardComplete = isCardComplete(activeDraftCard)
 
   return (
     <Stack spacing={4}>
@@ -262,6 +376,25 @@ export default function CreatePage({ authUser, onCreated }) {
                     <MenuItem value="PRIVATE">Private</MenuItem>
                     <MenuItem value="PUBLIC">Public</MenuItem>
                   </TextField>
+                  <TextField
+                    select
+                    label="Deck Type"
+                    helperText="A deck can be all flashcards or all quiz questions."
+                    variant="outlined"
+                    value={manualForm.cardType}
+                    onChange={(event) => {
+                      const nextType = event.target.value
+                      setManualForm((current) => ({ ...current, cardType: nextType }))
+                      setManualCards((current) =>
+                        current.map(() => createEmptyCard(nextType)),
+                      )
+                      setManualCardPage(0)
+                    }}
+                    sx={{ minWidth: { md: 260 } }}
+                  >
+                    <MenuItem value="TEXT">Flashcards</MenuItem>
+                    <MenuItem value="QUIZ">Quiz</MenuItem>
+                  </TextField>
                 </Stack>
                 {manualState.error && <Alert severity="error">{manualState.error}</Alert>}
                 {manualState.success && <Alert severity="success">{manualState.success}</Alert>}
@@ -294,6 +427,26 @@ export default function CreatePage({ authUser, onCreated }) {
                         </Stack>
                       </CardContent>
                     </Card>
+                    <Stack spacing={1}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        AI Deck Type
+                      </Typography>
+                      <Typography color="text.secondary">
+                        Choose whether AI should generate standard flashcards or quiz questions.
+                      </Typography>
+                      <ToggleButtonGroup
+                        exclusive
+                        value={aiCardType}
+                        onChange={(_, value) => {
+                          if (value) setAiCardType(value)
+                        }}
+                        size="medium"
+                        sx={{ alignSelf: 'flex-start' }}
+                      >
+                        <ToggleButton value="TEXT">Flashcards</ToggleButton>
+                        <ToggleButton value="QUIZ">Quiz</ToggleButton>
+                      </ToggleButtonGroup>
+                    </Stack>
                     <TextField
                       fullWidth
                       multiline
@@ -386,20 +539,49 @@ export default function CreatePage({ authUser, onCreated }) {
               </Stack>
               <TextField
                 fullWidth
-                label="Prompt"
-                placeholder="Example: What is the powerhouse of the cell?"
+                label={manualForm.cardType === 'QUIZ' ? 'Question' : 'Prompt'}
+                placeholder={manualForm.cardType === 'QUIZ' ? 'Example: Which planet is known as the Red Planet?' : 'Example: What is the powerhouse of the cell?'}
                 value={activeManualCard.prompt}
                 onChange={(event) => handleManualCardChange(visibleManualCardPage, 'prompt', event.target.value)}
               />
-              <TextField
-                fullWidth
-                multiline
-                minRows={2}
-                label="Answer"
-                placeholder="Example: The mitochondria."
-                value={activeManualCard.answer}
-                onChange={(event) => handleManualCardChange(visibleManualCardPage, 'answer', event.target.value)}
-              />
+              {manualForm.cardType === 'QUIZ' ? (
+                <>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Correct Option"
+                    value={activeManualCard.correctChoiceIndex}
+                    onChange={(event) =>
+                      handleManualCardChange(visibleManualCardPage, 'correctChoiceIndex', Number(event.target.value))
+                    }
+                  >
+                    {activeManualCard.choices.map((_, index) => (
+                      <MenuItem key={index} value={index}>
+                        Option {index + 1}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  {activeManualCard.choices.map((choice, index) => (
+                    <TextField
+                      key={index}
+                      fullWidth
+                      label={`Option ${index + 1}`}
+                      value={choice}
+                      onChange={(event) => handleManualChoiceChange(visibleManualCardPage, index, event.target.value)}
+                    />
+                  ))}
+                </>
+              ) : (
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  label="Answer"
+                  placeholder="Example: The mitochondria."
+                  value={activeManualCard.answer}
+                  onChange={(event) => handleManualCardChange(visibleManualCardPage, 'answer', event.target.value)}
+                />
+              )}
             </Stack>
           </Stack>
         </DialogContent>
@@ -489,6 +671,12 @@ export default function CreatePage({ authUser, onCreated }) {
                   <MenuItem value="PRIVATE">Private</MenuItem>
                   <MenuItem value="PUBLIC">Public</MenuItem>
                 </TextField>
+                <TextField
+                  label="Deck Type"
+                  value={draft.cardType === 'QUIZ' ? 'Quiz' : 'Flashcards'}
+                  InputProps={{ readOnly: true }}
+                  sx={{ maxWidth: 260 }}
+                />
                 <Divider />
                 <Stack key={`draft-card-${visibleDraftCardPage}-${draftCards.length}`} spacing={2}>
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
@@ -513,18 +701,47 @@ export default function CreatePage({ authUser, onCreated }) {
                   </Stack>
                   <TextField
                     fullWidth
-                    label="Prompt"
+                    label={draft.cardType === 'QUIZ' ? 'Question' : 'Prompt'}
                     value={activeDraftCard?.prompt ?? ''}
                     onChange={(event) => handleDraftCardChange(visibleDraftCardPage, 'prompt', event.target.value)}
                   />
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    label="Answer"
-                    value={activeDraftCard?.answer ?? ''}
-                    onChange={(event) => handleDraftCardChange(visibleDraftCardPage, 'answer', event.target.value)}
-                  />
+                  {draft.cardType === 'QUIZ' ? (
+                    <>
+                      <TextField
+                        select
+                        fullWidth
+                        label="Correct Option"
+                        value={activeDraftCard.correctChoiceIndex}
+                        onChange={(event) =>
+                          handleDraftCardChange(visibleDraftCardPage, 'correctChoiceIndex', Number(event.target.value))
+                        }
+                      >
+                        {activeDraftCard.choices.map((_, index) => (
+                          <MenuItem key={index} value={index}>
+                            Option {index + 1}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      {activeDraftCard.choices.map((choice, index) => (
+                        <TextField
+                          key={index}
+                          fullWidth
+                          label={`Option ${index + 1}`}
+                          value={choice}
+                          onChange={(event) => handleDraftChoiceChange(visibleDraftCardPage, index, event.target.value)}
+                        />
+                      ))}
+                    </>
+                  ) : (
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={2}
+                      label="Answer"
+                      value={activeDraftCard?.answer ?? ''}
+                      onChange={(event) => handleDraftCardChange(visibleDraftCardPage, 'answer', event.target.value)}
+                    />
+                  )}
                 </Stack>
               </Stack>
             ) : null}

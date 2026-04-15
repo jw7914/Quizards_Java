@@ -62,6 +62,18 @@ export async function fetchStudySetDetail(studySetId) {
   return request(`/api/study-sets/${studySetId}`)
 }
 
+export async function fetchStudySession(studySetId, mode, options = {}) {
+  const params = new URLSearchParams()
+  if (mode) {
+    params.set('mode', mode)
+  }
+  if (options.timeLimitMinutes) {
+    params.set('timeLimitMinutes', String(options.timeLimitMinutes))
+  }
+  const query = params.toString()
+  return request(`/api/study-sets/${studySetId}/study-session${query ? `?${query}` : ''}`)
+}
+
 export async function deleteStudySet(studySetId) {
   return request(`/api/study-sets/${studySetId}`, {
     method: 'DELETE',

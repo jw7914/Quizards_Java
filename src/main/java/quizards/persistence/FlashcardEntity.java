@@ -31,6 +31,9 @@ public class FlashcardEntity {
     @Column(nullable = false, length = 4000)
     private String answer;
 
+    @Column(name = "choices_data", length = 4000)
+    private String choicesData;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private FlashcardType type;
@@ -49,9 +52,10 @@ public class FlashcardEntity {
     protected FlashcardEntity() {
     }
 
-    public FlashcardEntity(String prompt, String answer, FlashcardType type, MasteryLevel masteryLevel, Instant nextReviewAt) {
+    public FlashcardEntity(String prompt, String answer, String choicesData, FlashcardType type, MasteryLevel masteryLevel, Instant nextReviewAt) {
         this.prompt = prompt;
         this.answer = answer;
+        this.choicesData = choicesData;
         this.type = type;
         this.masteryLevel = masteryLevel;
         this.nextReviewAt = nextReviewAt;
@@ -67,6 +71,10 @@ public class FlashcardEntity {
 
     public String getAnswer() {
         return answer;
+    }
+
+    public String getChoicesData() {
+        return choicesData;
     }
 
     public FlashcardType getType() {
