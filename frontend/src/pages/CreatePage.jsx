@@ -298,21 +298,14 @@ export default function CreatePage({ authUser, onCreated }) {
                     />
                   </>
                 ) : (
-                  <Card variant="outlined" sx={{ bgcolor: '#f8f9fa' }}>
-                    <CardContent sx={{ p: 3 }}>
-                      <Stack spacing={2}>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                          Generated Flashcards Ready
-                        </Typography>
-                        <Typography color="text.secondary">
-                          Your generated deck is ready to review. Open the modal to inspect the flashcards and save the deck.
-                        </Typography>
-                        <Button variant="outlined" onClick={() => setDraftOpen(true)}>
-                          View Generated Flashcards
-                        </Button>
-                      </Stack>
-                    </CardContent>
-                  </Card>
+                  <Stack spacing={1}>
+                    <Typography color="text.secondary">
+                      Your generated deck is ready. Open the modal to review, edit, and save the flashcards.
+                    </Typography>
+                    <Button variant="outlined" sx={{ alignSelf: 'flex-start' }} onClick={() => setDraftOpen(true)}>
+                      View Generated Flashcards
+                    </Button>
+                  </Stack>
                 )}
                 {draftState.error && <Alert severity="error">{draftState.error}</Alert>}
                 <Button
@@ -356,16 +349,22 @@ export default function CreatePage({ authUser, onCreated }) {
             ) : null}
             <Divider />
             <Stack spacing={2}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} alignItems={{ sm: 'center' }}>
+              <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
                   Card {manualCardPage + 1} of {manualCards.length}
                 </Typography>
+                <Box sx={{ flexGrow: 1 }} />
                 <IconButton
-                  color="inherit"
+                  color="error"
                   aria-label={`remove card ${manualCardPage + 1}`}
                   onClick={() => handleRemoveManualCard(manualCardPage)}
                   disabled={manualCards.length === 1}
-                  sx={{ alignSelf: 'flex-start', border: '1px solid #dadce0', borderRadius: 0 }}
+                  sx={{
+                    flexShrink: 0,
+                    border: '1px solid',
+                    borderColor: 'error.main',
+                    borderRadius: 0,
+                  }}
                 >
                   <DeleteOutlineRounded />
                 </IconButton>
@@ -390,15 +389,31 @@ export default function CreatePage({ authUser, onCreated }) {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, pt: 1, justifyContent: 'space-between' }}>
-          <Pagination
-            count={manualCards.length}
-            page={manualCardPage + 1}
-            onChange={(_, page) => setManualCardPage(page - 1)}
-            color="primary"
-            shape="rounded"
-            siblingCount={0}
-            boundaryCount={1}
-          />
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+            <Pagination
+              count={manualCards.length}
+              page={manualCardPage + 1}
+              onChange={(_, page) => setManualCardPage(page - 1)}
+              color="primary"
+              shape="rounded"
+              siblingCount={0}
+              boundaryCount={1}
+            />
+            <TextField
+              select
+              size="small"
+              label="Jump To"
+              value={manualCardPage}
+              onChange={(event) => setManualCardPage(Number(event.target.value))}
+              sx={{ minWidth: 120 }}
+            >
+              {manualCards.map((_, index) => (
+                <MenuItem key={index} value={index}>
+                  Card {index + 1}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
           <Stack direction="row" spacing={1}>
             <Button onClick={handleAddManualCard} startIcon={<AddRounded />} disabled={!activeManualCardComplete}>
               Add Another Card
@@ -449,16 +464,22 @@ export default function CreatePage({ authUser, onCreated }) {
                 />
                 <Divider />
                 <Stack spacing={2}>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={2} alignItems={{ sm: 'center' }}>
+                  <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
                       Card {draftCardPage + 1} of {draftCards.length}
                     </Typography>
+                    <Box sx={{ flexGrow: 1 }} />
                     <IconButton
-                      color="inherit"
+                      color="error"
                       aria-label={`remove generated card ${draftCardPage + 1}`}
                       onClick={() => handleRemoveDraftCard(draftCardPage)}
                       disabled={draftCards.length === 1}
-                      sx={{ alignSelf: 'flex-start', border: '1px solid #dadce0', borderRadius: 0 }}
+                      sx={{
+                        flexShrink: 0,
+                        border: '1px solid',
+                        borderColor: 'error.main',
+                        borderRadius: 0,
+                      }}
                     >
                       <DeleteOutlineRounded />
                     </IconButton>
@@ -483,15 +504,31 @@ export default function CreatePage({ authUser, onCreated }) {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, pt: 1, justifyContent: 'space-between' }}>
-          <Pagination
-            count={Math.max(draftCards.length, 1)}
-            page={draftCardPage + 1}
-            onChange={(_, page) => setDraftCardPage(page - 1)}
-            color="primary"
-            shape="rounded"
-            siblingCount={0}
-            boundaryCount={1}
-          />
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+            <Pagination
+              count={Math.max(draftCards.length, 1)}
+              page={draftCardPage + 1}
+              onChange={(_, page) => setDraftCardPage(page - 1)}
+              color="primary"
+              shape="rounded"
+              siblingCount={0}
+              boundaryCount={1}
+            />
+            <TextField
+              select
+              size="small"
+              label="Jump To"
+              value={draftCardPage}
+              onChange={(event) => setDraftCardPage(Number(event.target.value))}
+              sx={{ minWidth: 120 }}
+            >
+              {draftCards.map((_, index) => (
+                <MenuItem key={index} value={index}>
+                  Card {index + 1}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
           <Stack direction="row" spacing={1}>
             <Button onClick={handleAddDraftCard} startIcon={<AddRounded />} disabled={!activeDraftCardComplete}>
               Add Another Card

@@ -5,3 +5,4 @@ target/
 .DS_Store
 .vscode
 node_modules/
+src/main/resources/static
