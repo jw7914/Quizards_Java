@@ -20,7 +20,7 @@ export default function ShelfSection({ title, subtitle, icon, items, emptyLabel,
           ) : (
             <Grid container spacing={3}>
               {items.map((item) => (
-                <Grid item key={item.id} xs={12} sm={6}>
+                <Grid key={item.id} size={{ xs: 12, sm: 6 }} sx={{ display: 'flex' }}>
                   <StudySetCard
                     studySet={item}
                     showDelete={showDelete}

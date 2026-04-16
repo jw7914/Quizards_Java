@@ -13,6 +13,7 @@ import quizards.repository.StudySetRepository;
 import quizards.validation.InputValidator;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +34,16 @@ public class StudySetService {
 
     public List<StudySet> findPublicStudySets() {
         return prepareSortedStudySets(studySetRepository.findByVisibility(Visibility.PUBLIC)).stream()
+                .map(this::toModel)
+                .toList();
+    }
+
+    public List<StudySet> findRandomPublicStudySets(int limit) {
+        int normalizedLimit = Math.max(1, limit);
+        List<StudySetEntity> publicStudySets = new ArrayList<>(prepareSortedStudySets(studySetRepository.findByVisibility(Visibility.PUBLIC)));
+        Collections.shuffle(publicStudySets);
+        return publicStudySets.stream()
+                .limit(normalizedLimit)
                 .map(this::toModel)
                 .toList();
     }

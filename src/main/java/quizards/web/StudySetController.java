@@ -57,6 +57,13 @@ public class StudySetController {
                 .toList();
     }
 
+    @GetMapping("/study-sets/random")
+    public List<StudySetResponse> getRandomPublicStudySets(@RequestParam(defaultValue = "3") int limit) {
+        return studySetService.findRandomPublicStudySets(limit).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @GetMapping("/my/study-sets")
     public List<StudySetResponse> getMyStudySets(Authentication authentication) {
         AppUserEntity owner = requireOwner(authentication);

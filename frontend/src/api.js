@@ -54,6 +54,10 @@ export async function fetchPublicStudySets() {
   return request('/api/study-sets')
 }
 
+export async function fetchRandomPublicStudySets(limit = 3) {
+  return request(`/api/study-sets/random?limit=${limit}`)
+}
+
 export async function fetchMyStudySets() {
   return request('/api/my/study-sets')
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Box, CircularProgress, Container, Stack, Typography } from '@mui/material'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
-import { deleteStudySet, fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, login, logout, register, updateStudySetVisibility } from './api'
+import { deleteStudySet, fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, fetchRandomPublicStudySets, login, logout, register, updateStudySetVisibility } from './api'
 
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -12,17 +12,19 @@ import SignInPage from './pages/SignInPage'
 import RegisterPage from './pages/RegisterPage'
 import StudySetPage from './pages/StudySetPage'
 
+const GUEST_USER = { authenticated: false, id: null, username: null }
+
 export default function App() {
   const navigate = useNavigate()
   const [authUser, setAuthUser] = useState(null)
   const [authResolved, setAuthResolved] = useState(false)
   const [publicSets, setPublicSets] = useState([])
+  const [randomPublicSets, setRandomPublicSets] = useState([])
   const [mySets, setMySets] = useState([])
   const [loadingSets, setLoadingSets] = useState(true)
   const [dashboardError, setDashboardError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
   const [updatingVisibilityId, setUpdatingVisibilityId] = useState(null)
-  const guestUser = { authenticated: false, id: null, username: null }
 
   const refreshDashboard = useCallback(async (user) => {
     setLoadingSets(true)
@@ -31,9 +33,12 @@ export default function App() {
       const publicData = await fetchPublicStudySets()
       setPublicSets(publicData)
       if (user?.authenticated) {
+        setRandomPublicSets([])
         const ownData = await fetchMyStudySets()
         setMySets(ownData)
       } else {
+        const randomData = await fetchRandomPublicStudySets(3)
+        setRandomPublicSets(randomData)
         setMySets([])
       }
     } catch (error) {
@@ -52,10 +57,10 @@ export default function App() {
         if (!alive) return
         setAuthUser(user)
         await refreshDashboard(user)
-      } catch (error) {
+      } catch {
         if (!alive) return
-        setAuthUser(guestUser)
-        await refreshDashboard(guestUser)
+        setAuthUser(GUEST_USER)
+        await refreshDashboard(GUEST_USER)
       } finally {
         if (alive) {
           setAuthResolved(true)
@@ -86,8 +91,8 @@ export default function App() {
 
   const handleLogout = async () => {
     await logout()
-    setAuthUser({ authenticated: false, id: null, username: null })
-    await refreshDashboard({ authenticated: false, id: null, username: null })
+    setAuthUser(GUEST_USER)
+    await refreshDashboard(GUEST_USER)
     navigate('/')
   }
 
@@ -148,6 +153,7 @@ export default function App() {
                 loadingSets={loadingSets}
                 dashboardError={dashboardError}
                 publicSets={publicSets}
+                randomPublicSets={randomPublicSets}
                 mySets={mySets}
               />
             }
