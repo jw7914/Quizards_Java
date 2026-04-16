@@ -4,7 +4,6 @@ import quizards.ai.AIProperties;
 import quizards.ai.AIService;
 import quizards.ai.GeminiAIService;
 import quizards.ai.StubAIService;
-import quizards.service.StudySetService;
 import quizards.validation.InputValidator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
