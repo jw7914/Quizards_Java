@@ -18,7 +18,11 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     if (payload && typeof payload === 'object' && 'error' in payload) {
-      throw new Error(payload.error)
+      const details =
+        typeof payload.details === 'string' && payload.details.trim().length > 0
+          ? ` ${payload.details}`
+          : ''
+      throw new Error(`${payload.error}${details}`)
     }
     throw new Error(typeof payload === 'string' ? payload : 'Request failed.')
   }

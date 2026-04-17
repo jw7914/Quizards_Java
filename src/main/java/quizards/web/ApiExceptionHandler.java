@@ -1,6 +1,8 @@
 package quizards.web;
 
 import java.util.Map;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -45,5 +47,36 @@ public class ApiExceptionHandler {
                 "error", exception.getMessage(),
                 "details", causeMessage == null || causeMessage.isBlank() ? "No provider details available." : causeMessage
         );
+    }
+
+    @ExceptionHandler({CompletionException.class, ExecutionException.class})
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public Map<String, String> handleAsyncWrapper(Exception exception) {
+        Throwable root = unwrapAsyncException(exception);
+
+        if (root instanceof AIProviderException aiProviderException) {
+            String causeMessage = aiProviderException.getCause() != null ? aiProviderException.getCause().getMessage() : null;
+            return Map.of(
+                    "error", aiProviderException.getMessage(),
+                    "details", causeMessage == null || causeMessage.isBlank() ? "No provider details available." : causeMessage
+            );
+        }
+        if (root instanceof IllegalArgumentException illegalArgumentException) {
+            return Map.of("error", illegalArgumentException.getMessage());
+        }
+        if (root instanceof AccessDeniedException accessDeniedException) {
+            return Map.of("error", accessDeniedException.getMessage());
+        }
+
+        String message = root.getMessage();
+        return Map.of("error", message == null || message.isBlank() ? "Request failed." : message);
+    }
+
+    private Throwable unwrapAsyncException(Throwable throwable) {
+        Throwable current = throwable;
+        while ((current instanceof CompletionException || current instanceof ExecutionException) && current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current;
     }
 }

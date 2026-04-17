@@ -9,6 +9,7 @@ import dev.langchain4j.model.output.structured.Description;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
+import dev.langchain4j.service.V;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -136,7 +137,7 @@ public class GeminiAIService implements AIService {
 
                 {{prompt}}
                 """)
-        StudySetDraft generate(String cardCountInstruction, String prompt);
+        StudySetDraft generate(@V("cardCountInstruction") String cardCountInstruction, @V("prompt") String prompt);
     }
 
     @SystemMessage("""
@@ -155,7 +156,7 @@ public class GeminiAIService implements AIService {
 
                 {{prompt}}
                 """)
-        QuizStudySetDraft generate(String cardCountInstruction, String prompt);
+        QuizStudySetDraft generate(@V("cardCountInstruction") String cardCountInstruction, @V("prompt") String prompt);
     }
 
     private String buildCardCountInstruction(Integer requestedCount) {
