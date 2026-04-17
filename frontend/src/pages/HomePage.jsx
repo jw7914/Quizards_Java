@@ -50,19 +50,19 @@ export default function OverviewPage({
                   }}
                 />
                 <SectionHeading
-                  title="Study faster with simpler flashcard workflows."
-                  subtitle="Quizards helps you turn notes into clean study decks, browse public sets, and keep your workspace organized without extra setup."
+                  title="Create an account to unlock your full study workspace."
+                  subtitle="Quizards helps you generate decks with AI, save private study sets, and manage your library once you sign in."
                 />
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <Button
                     component={RouterLink}
-                    to={isAuthenticated ? "/create" : "/library"}
+                    to={isAuthenticated ? "/create" : "/register"}
                     variant="contained"
                     color="primary"
                     size="large"
                     startIcon={<MenuBookRounded />}
                   >
-                    {isAuthenticated ? "Create Deck" : "Explore Decks"}
+                    {isAuthenticated ? "Create Deck" : "Create Account"}
                   </Button>
                   {isAuthenticated ? (
                     <Button
@@ -108,12 +108,12 @@ export default function OverviewPage({
                   </Box>
                   <Box>
                     <Typography variant="h4">
-                      {isAuthenticated ? mySets.length : "AI"}
+                      {isAuthenticated ? mySets.length : "Sign Up"}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       {isAuthenticated
                         ? "saved in your workspace"
-                        : "deck generation built in"}
+                        : "to save decks and access AI tools"}
                     </Typography>
                   </Box>
                 </Stack>
@@ -127,7 +127,10 @@ export default function OverviewPage({
 
       {!isAuthenticated && randomPublicSets.length > 0 ? (
         <Stack spacing={3}>
-          <SectionHeading title="Start with a random public deck." />
+          <SectionHeading
+            title="Preview public decks, then create an account to start building."
+            subtitle="Guest browsing is limited. Sign up to generate decks, save your own sets, and access your library."
+          />
           <Grid container spacing={3}>
             {randomPublicSets.map((studySet) => (
               <Grid

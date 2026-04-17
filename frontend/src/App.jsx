@@ -171,16 +171,16 @@ export default function App() {
           <Route
             path="/library"
             element={
-              <LibraryPage
-                authUser={authUser}
-                loadingSets={loadingSets}
-                publicSets={publicSets}
-                mySets={mySets}
-                deletingId={deletingId}
-                updatingVisibilityId={updatingVisibilityId}
-                onDelete={handleDeleteStudySet}
-                onToggleVisibility={handleToggleStudySetVisibility}
-              />
+              <ProtectedRoute authUser={authUser}>
+                <LibraryPage
+                  mySets={mySets}
+                  loadingSets={loadingSets}
+                  deletingId={deletingId}
+                  updatingVisibilityId={updatingVisibilityId}
+                  onDelete={handleDeleteStudySet}
+                  onToggleVisibility={handleToggleStudySetVisibility}
+                />
+              </ProtectedRoute>
             }
           />
           <Route path="/study-set/:studySetId" element={<StudySetPage authUser={authUser} />} />

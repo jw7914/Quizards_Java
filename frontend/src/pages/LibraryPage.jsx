@@ -1,12 +1,10 @@
 import { useState } from 'react'
-import { Alert, Box, Button, Card, CardContent, Chip, Divider, IconButton, LinearProgress, MenuItem, Pagination, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
+import { Alert, Box, Card, CardContent, Chip, Divider, IconButton, LinearProgress, MenuItem, Pagination, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
 import ArrowOutwardRounded from '@mui/icons-material/ArrowOutwardRounded'
 import BookmarkAddedRounded from '@mui/icons-material/BookmarkAddedRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
-import LockOpenRounded from '@mui/icons-material/LockOpenRounded'
-import PersonAddAltRounded from '@mui/icons-material/PersonAddAltRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 import SectionHeading from '../components/SectionHeading'
 
@@ -267,12 +265,12 @@ function LibraryPane({ title, subtitle, icon, items, emptyLabel, showDelete = fa
   )
 }
 
-export default function LibraryPage({ authUser, mySets, deletingId, updatingVisibilityId, loadingSets, onDelete, onToggleVisibility }) {
+export default function LibraryPage({ mySets, deletingId, updatingVisibilityId, loadingSets, onDelete, onToggleVisibility }) {
   return (
     <Stack spacing={4}>
       <SectionHeading
         title="Library"
-        subtitle="A compact view of your saved decks."
+        subtitle="Manage the decks saved in your workspace."
       />
 
       {loadingSets ? <LinearProgress /> : null}
@@ -282,25 +280,14 @@ export default function LibraryPage({ authUser, mySets, deletingId, updatingVisi
           title="My Decks"
           subtitle="Your saved and created study sets."
           icon={<BookmarkAddedRounded color="secondary" />}
-          items={authUser?.authenticated ? mySets : []}
-          showDelete={authUser?.authenticated}
+          items={mySets}
+          showDelete
           deletingId={deletingId}
           updatingVisibilityId={updatingVisibilityId}
           onDelete={onDelete}
           onToggleVisibility={onToggleVisibility}
-          emptyLabel={authUser?.authenticated ? 'You have no decks yet.' : 'Sign in to access your library.'}
+          emptyLabel='You have no decks yet.'
         />
-
-        {!authUser?.authenticated ? (
-          <Stack direction="row" spacing={2}>
-            <Button component={RouterLink} to="/login" variant="outlined" color="primary" startIcon={<LockOpenRounded />}>
-              Login
-            </Button>
-            <Button component={RouterLink} to="/register" variant="text" color="primary" startIcon={<PersonAddAltRounded />}>
-              Register
-            </Button>
-          </Stack>
-        ) : null}
       </Stack>
     </Stack>
   )

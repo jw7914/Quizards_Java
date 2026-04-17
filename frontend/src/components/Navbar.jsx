@@ -7,7 +7,7 @@ import LockOpenRounded from '@mui/icons-material/LockOpenRounded'
 const navItems = [
   { label: 'Home', to: '/' },
   { label: 'Create Deck', to: '/create', requiresAuth: true },
-  { label: 'Library', to: '/library' },
+  { label: 'Library', to: '/library', requiresAuth: true },
 ]
 
 export default function Navbar({ authUser, onLogout }) {
