@@ -5,12 +5,13 @@ import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 
 export default function StudySetCard({ studySet, showDelete = false, deleting = false, onDelete }) {
+  const deckTypeLabel = studySet.deckType === 'QUIZ' ? 'Quiz cards' : 'Text cards'
+
   return (
     <Card
       sx={{
         width: '100%',
         height: '100%',
-        minHeight: { xs: 320, sm: 340 },
         bgcolor: '#ffffff',
         cursor: 'pointer',
         display: 'flex',
@@ -23,11 +24,7 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
             variant="h6"
             sx={{
               fontWeight: 500,
-              minHeight: '3.6rem',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+              overflowWrap: 'anywhere',
             }}
           >
             {studySet.title}
@@ -44,18 +41,16 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
           sx={{
             flexGrow: 1,
             fontSize: '0.9rem',
-            minHeight: '4.1rem',
-            display: '-webkit-box',
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
+            whiteSpace: 'normal',
+            overflowWrap: 'anywhere',
           }}
         >
           {studySet.description || 'No description provided.'}
         </Typography>
         <Divider />
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 'auto', minHeight: '2rem', alignContent: 'flex-start' }}>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 'auto', alignContent: 'flex-start' }}>
           <Chip icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />} label={`${studySet.flashcardCount} cards`} variant="outlined" />
+          <Chip label={deckTypeLabel} variant="outlined" />
           {studySet.ownerUsername && <Chip icon={<VisibilityRounded sx={{ fontSize: 16 }} />} label={`by ${studySet.ownerUsername}`} variant="outlined" color="primary" />}
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}>
