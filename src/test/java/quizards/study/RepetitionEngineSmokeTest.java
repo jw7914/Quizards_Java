@@ -6,15 +6,15 @@ import quizards.model.StudySet;
 import quizards.model.TextFlashcard;
 import java.util.UUID;
 
-public class LeitnerEngineSmokeTest {
+public class RepetitionEngineSmokeTest {
 
     public static void main(String[] args) {
-        LeitnerEngine engine = new LeitnerEngine();
+        RepetitionEngine engine = new RepetitionEngine();
         verifyEmptyDeckThrows(engine);
         verifyDeckStarts(engine);
     }
 
-    private static void verifyEmptyDeckThrows(LeitnerEngine engine) {
+    private static void verifyEmptyDeckThrows(RepetitionEngine engine) {
         StudySet studySet = new StudySet(UUID.randomUUID(), "Empty", "No cards yet", Visibility.PRIVATE);
         try {
             engine.startSession(studySet);
@@ -24,7 +24,7 @@ public class LeitnerEngineSmokeTest {
         }
     }
 
-    private static void verifyDeckStarts(LeitnerEngine engine) {
+    private static void verifyDeckStarts(RepetitionEngine engine) {
         StudySet studySet = new StudySet(UUID.randomUUID(), "Biology", "Cells", Visibility.PUBLIC);
         studySet.addCard(new TextFlashcard(UUID.randomUUID(), "What is ATP?", "Cellular energy"));
 

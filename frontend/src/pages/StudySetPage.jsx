@@ -21,7 +21,7 @@ import SectionHeading from '../components/SectionHeading'
 import { fetchStudySession, fetchStudySetDetail } from '../api'
 
 const STUDY_MODES = [
-  { value: 'LEITNER', label: 'Leitner' },
+  { value: 'REPETITION', label: 'Repetition' },
   { value: 'TIMED_QUIZ', label: 'Timed Quiz' },
   { value: 'STREAK', label: 'Streak' },
 ]
@@ -62,7 +62,7 @@ export default function StudySetPage({ authUser }) {
   const [session, setSession] = useState(null)
   const [quizSession, setQuizSession] = useState(null)
   const [pendingQuizSession, setPendingQuizSession] = useState(null)
-  const [mode, setMode] = useState('LEITNER')
+  const [mode, setMode] = useState('REPETITION')
   const [loading, setLoading] = useState(true)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [error, setError] = useState('')
@@ -86,7 +86,7 @@ export default function StudySetPage({ authUser }) {
         setSession(null)
         setQuizSession(null)
         setPendingQuizSession(null)
-        setMode('LEITNER')
+        setMode('REPETITION')
         setActiveIndex(0)
         setFlipped(false)
         setSelectedChoice('')
@@ -180,7 +180,7 @@ export default function StudySetPage({ authUser }) {
     : Math.min(activeIndex, Math.max(cardCount - 1, 0))
   const activeCard = displayCards[visibleIndex]
   const progressValue = isQuizDeck
-    ? quizSession?.mode === 'LEITNER'
+    ? quizSession?.mode === 'REPETITION'
       ? (((quizSession?.originalCount ?? 0) - (quizSession?.queue?.length ?? 0)) / Math.max(quizSession?.originalCount ?? 1, 1)) * 100
       : quizSession?.mode === 'STREAK'
         ? ((quizSession?.currentStreak ?? 0) / Math.max(quizSession?.originalCount ?? 1, 1)) * 100
@@ -218,7 +218,7 @@ export default function StudySetPage({ authUser }) {
     const nextCurrentStreak = isCorrect ? quizSession.currentStreak + 1 : 0
     const nextBestStreak = Math.max(quizSession.bestStreak, nextCurrentStreak)
 
-    if (quizSession.mode === 'LEITNER') {
+    if (quizSession.mode === 'REPETITION') {
       const nextQueue = [...quizSession.queue]
       const [currentItem] = nextQueue.splice(quizSession.currentIndex, 1)
       if (!isCorrect) {
@@ -459,7 +459,7 @@ export default function StudySetPage({ authUser }) {
           {!hasSession ? (
             <Stack spacing={2} alignItems="center" sx={{ py: { xs: 4, md: 8 } }}>
               <Typography variant="h5">{formatMode(mode)}</Typography>
-              {mode === 'LEITNER' ? <Typography color="text.secondary">Review due cards first.</Typography> : null}
+              {mode === 'REPETITION' ? <Typography color="text.secondary">Review due cards first.</Typography> : null}
               {mode === 'TIMED_QUIZ' ? <Typography color="text.secondary">Race through the deck on a timer.</Typography> : null}
               {mode === 'STREAK' ? <Typography color="text.secondary">Keep your run going card by card.</Typography> : null}
             </Stack>
@@ -582,7 +582,7 @@ export default function StudySetPage({ authUser }) {
                             {selectedChoice === activeCard.answer ? 'Correct' : `Correct answer: ${activeCard.answer}`}
                           </Alert>
                           <Button variant="contained" onClick={handleNextQuizCard}>
-                            {quizSession?.mode === 'LEITNER' && !quizSession?.lastAnswerCorrect ? 'Try Next Card' : 'Continue'}
+                            {quizSession?.mode === 'REPETITION' && !quizSession?.lastAnswerCorrect ? 'Try Next Card' : 'Continue'}
                           </Button>
                         </Stack>
                       ) : null}

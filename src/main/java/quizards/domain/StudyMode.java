@@ -1,7 +1,7 @@
 package quizards.domain;
 
 public enum StudyMode {
-    LEITNER,
+    REPETITION,
     TIMED_QUIZ,
     STREAK
 }

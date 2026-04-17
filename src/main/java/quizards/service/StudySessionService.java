@@ -6,7 +6,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import quizards.domain.StudyMode;
 import quizards.model.StudySet;
-import quizards.study.LeitnerEngine;
+import quizards.study.RepetitionEngine;
 import quizards.study.StreakEngine;
 import quizards.study.StudyEngine;
 import quizards.study.StudySession;
@@ -19,7 +19,7 @@ public class StudySessionService {
 
     public StudySessionService() {
         engines = new EnumMap<>(StudyMode.class);
-        register(new LeitnerEngine());
+        register(new RepetitionEngine());
         register(new TimedQuizEngine());
         register(new StreakEngine());
     }
@@ -29,7 +29,7 @@ public class StudySessionService {
     }
 
     public StudySession startSession(StudySet studySet, StudyMode mode, Integer timeLimitMinutes) {
-        StudyMode resolvedMode = mode == null ? StudyMode.LEITNER : mode;
+        StudyMode resolvedMode = mode == null ? StudyMode.REPETITION : mode;
 
         if (resolvedMode == StudyMode.TIMED_QUIZ) {
             TimedQuizEngine timedQuizEngine = (TimedQuizEngine) engines.get(StudyMode.TIMED_QUIZ);

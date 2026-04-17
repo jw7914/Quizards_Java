@@ -5,11 +5,11 @@ import quizards.exception.EmptyDeckException;
 import quizards.model.StudySet;
 import java.time.Duration;
 
-public class LeitnerEngine implements StudyEngine {
+public class RepetitionEngine implements StudyEngine {
 
     @Override
     public StudyMode mode() {
-        return StudyMode.LEITNER;
+        return StudyMode.REPETITION;
     }
 
     @Override
@@ -20,7 +20,7 @@ public class LeitnerEngine implements StudyEngine {
 
     private void validateStudySet(StudySet studySet) {
         if (studySet.getCards().isEmpty()) {
-            throw new EmptyDeckException("Cannot start a Leitner session with an empty study set.");
+            throw new EmptyDeckException("Cannot start a repetition session with an empty study set.");
         }
     }
 }

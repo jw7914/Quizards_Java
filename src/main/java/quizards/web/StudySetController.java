@@ -85,7 +85,7 @@ public class StudySetController {
     @GetMapping("/study-sets/{studySetId}/study-session")
     public StudySessionResponse getStudySession(
             @PathVariable UUID studySetId,
-            @RequestParam(defaultValue = "LEITNER") StudyMode mode,
+            @RequestParam(defaultValue = "REPETITION") StudyMode mode,
             @RequestParam(required = false) Integer timeLimitMinutes,
             Authentication authentication
     ) {

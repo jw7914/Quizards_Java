@@ -17,7 +17,7 @@ public class User {
     public User(long id, String username) {
         this.id = id;
         this.username = Objects.requireNonNull(username, "username must not be null");
-        this.preferredStudyMode = StudyMode.LEITNER;
+        this.preferredStudyMode = StudyMode.REPETITION;
         this.ownedStudySets = new ArrayList<>();
     }
 
