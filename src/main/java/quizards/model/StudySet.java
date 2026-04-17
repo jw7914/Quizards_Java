@@ -1,10 +1,8 @@
 package quizards.model;
 
 import quizards.domain.FlashcardType;
-import quizards.domain.MasteryLevel;
 import quizards.domain.Visibility;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -77,18 +75,6 @@ public class StudySet {
 
     public boolean removeCard(UUID flashcardId) {
         return cards.removeIf(card -> card.getId().equals(flashcardId));
-    }
-
-    public List<Flashcard> getCardsByMastery(MasteryLevel masteryLevel) {
-        return cards.stream()
-                .filter(card -> card.getMasteryLevel() == masteryLevel)
-                .toList();
-    }
-
-    public List<Flashcard> getCardsSortedForLinearReview() {
-        return cards.stream()
-                .sorted(Comparator.comparing(Flashcard::getNextReviewAt))
-                .toList();
     }
 
     public FlashcardType getDeckCardType() {

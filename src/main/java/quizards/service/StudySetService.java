@@ -75,9 +75,7 @@ public class StudySetService {
                 flashcard.getPrompt(),
                 flashcard.getAnswer(),
                 serializeChoices(flashcard),
-                flashcard.getType(),
-                flashcard.getMasteryLevel(),
-                flashcard.getNextReviewAt()
+                flashcard.getType()
         )));
         return toModel(studySetRepository.save(studySet));
     }
@@ -146,9 +144,7 @@ public class StudySetService {
                 entity.getDescription(),
                 entity.getVisibility()
         );
-        entity.getFlashcards().stream()
-                .sorted(Comparator.comparing(FlashcardEntity::getNextReviewAt))
-                .forEach(card -> {
+        entity.getFlashcards().forEach(card -> {
                     Flashcard flashcard;
                     if (card.getType() == quizards.domain.FlashcardType.QUIZ) {
                         flashcard = new QuizFlashcard(
@@ -160,8 +156,6 @@ public class StudySetService {
                     } else {
                         flashcard = new TextFlashcard(card.getId(), card.getPrompt(), card.getAnswer());
                     }
-                    flashcard.setMasteryLevel(card.getMasteryLevel());
-                    flashcard.setNextReviewAt(card.getNextReviewAt());
                     studySet.addCard(flashcard);
                 });
         return studySet;

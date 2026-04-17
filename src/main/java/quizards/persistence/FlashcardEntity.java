@@ -10,11 +10,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
 import quizards.domain.FlashcardType;
-import quizards.domain.MasteryLevel;
 
 @Entity
 @Table(name = "flashcards")
@@ -38,13 +36,6 @@ public class FlashcardEntity {
     @Column(nullable = false, length = 20)
     private FlashcardType type;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private MasteryLevel masteryLevel;
-
-    @Column(nullable = false)
-    private Instant nextReviewAt;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "study_set_id", nullable = false)
     private StudySetEntity studySet;
@@ -52,13 +43,11 @@ public class FlashcardEntity {
     protected FlashcardEntity() {
     }
 
-    public FlashcardEntity(String prompt, String answer, String choicesData, FlashcardType type, MasteryLevel masteryLevel, Instant nextReviewAt) {
+    public FlashcardEntity(String prompt, String answer, String choicesData, FlashcardType type) {
         this.prompt = prompt;
         this.answer = answer;
         this.choicesData = choicesData;
         this.type = type;
-        this.masteryLevel = masteryLevel;
-        this.nextReviewAt = nextReviewAt;
     }
 
     public UUID getId() {
@@ -79,14 +68,6 @@ public class FlashcardEntity {
 
     public FlashcardType getType() {
         return type;
-    }
-
-    public MasteryLevel getMasteryLevel() {
-        return masteryLevel;
-    }
-
-    public Instant getNextReviewAt() {
-        return nextReviewAt;
     }
 
     public void setStudySet(StudySetEntity studySet) {

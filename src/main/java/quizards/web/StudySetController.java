@@ -242,8 +242,7 @@ public class StudySetController {
                                 card.getPrompt(),
                                 card.getAnswer(),
                                 card instanceof QuizFlashcard quizFlashcard ? quizFlashcard.getChoices() : List.of(),
-                                card.getType(),
-                                card.getMasteryLevel()
+                                card.getType()
                         ))
                         .toList()
         );
@@ -269,8 +268,7 @@ public class StudySetController {
                 card.getPrompt(),
                 card.getAnswer(),
                 card instanceof QuizFlashcard quizFlashcard ? quizFlashcard.getChoices() : List.of(),
-                card.getType(),
-                card.getMasteryLevel()
+                card.getType()
         );
     }
 
