@@ -19,6 +19,8 @@ import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
 import IosShareRounded from '@mui/icons-material/IosShareRounded'
 import TimerOutlined from '@mui/icons-material/TimerOutlined'
+import VisibilityOffOutlined from '@mui/icons-material/VisibilityOffOutlined'
+import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined'
 import SectionHeading from '../components/SectionHeading'
 import { fetchStudySession, fetchStudySetDetail } from '../api'
 
@@ -73,6 +75,7 @@ export default function StudySetPage({ authUser }) {
   const [timedMinutes, setTimedMinutes] = useState('10')
   const [selectedChoice, setSelectedChoice] = useState('')
   const [shareMessage, setShareMessage] = useState('')
+  const [revealedCards, setRevealedCards] = useState({})
 
   useEffect(() => {
     let active = true
@@ -93,6 +96,7 @@ export default function StudySetPage({ authUser }) {
         setActiveIndex(0)
         setFlipped(false)
         setSelectedChoice('')
+        setRevealedCards({})
       } catch (loadError) {
         if (active) {
           setError(loadError.message)
@@ -338,6 +342,31 @@ export default function StudySetPage({ authUser }) {
     }
   }
 
+  const toggleCardReveal = (cardKey) => {
+    setRevealedCards((current) => ({
+      ...current,
+      [cardKey]: !current[cardKey],
+    }))
+  }
+
+  const allCardsRevealed = flashcards.length > 0 && flashcards.every((card, index) => {
+    const cardKey = card.id ?? `${studySetId}-${index}`
+    return Boolean(revealedCards[cardKey])
+  })
+
+  const handleToggleRevealAll = () => {
+    if (allCardsRevealed) {
+      setRevealedCards({})
+      return
+    }
+
+    setRevealedCards(
+      Object.fromEntries(
+        flashcards.map((card, index) => [card.id ?? `${studySetId}-${index}`, true]),
+      ),
+    )
+  }
+
   return (
     <Stack spacing={5}>
       <Stack
@@ -345,22 +374,29 @@ export default function StudySetPage({ authUser }) {
         spacing={2}
         justifyContent="space-between"
         alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+        sx={{ width: '100%' }}
       >
-        <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
+        </Box>
         {studySet.visibility === 'PUBLIC' ? (
           <Button
             variant="outlined"
             color="primary"
             startIcon={<IosShareRounded />}
             onClick={handleShare}
-            sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0 }}
+            sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0, ml: { md: 'auto' } }}
           >
             Share
           </Button>
         ) : null}
       </Stack>
 
-      {shareMessage ? <Alert severity="success">{shareMessage}</Alert> : null}
+      {shareMessage ? (
+        <Alert severity="success" onClose={() => setShareMessage('')}>
+          {shareMessage}
+        </Alert>
+      ) : null}
 
       <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
         <Chip label={studySet.visibility} color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'} variant="outlined" />
@@ -734,22 +770,44 @@ export default function StudySetPage({ authUser }) {
       </Card>
 
       <Stack spacing={3}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'flex-end' }}>
-          <Box>
-            <Typography
-              variant="overline"
-              color="text.secondary"
-              sx={{ letterSpacing: '0.08em', display: 'block', mb: 0.5 }}
-            >
-              Full Study Set
-            </Typography>
-            <Typography variant="h4" sx={{ lineHeight: 1.1 }}>
-              Review every card
-            </Typography>
-          </Box>
-          <Typography color="text.secondary">
-            {flashcards.length} cards in this deck
-          </Typography>
+        <Stack spacing={1}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={2}
+            alignItems={{ xs: 'flex-start', md: 'center' }}
+            sx={{ width: '100%' }}
+          >
+            <Box sx={{ minWidth: 0, flexGrow: 1, width: { xs: '100%', md: 'auto' } }}>
+              <Typography
+                variant="overline"
+                color="text.secondary"
+                sx={{ letterSpacing: '0.08em', display: 'block', mb: 0.5 }}
+              >
+                Full Study Set
+              </Typography>
+              <Typography variant="h4" sx={{ lineHeight: 1.1 }}>
+                Review every card
+              </Typography>
+            </Box>
+            {flashcards.length > 0 ? (
+              <Stack
+                spacing={1}
+                alignItems={{ xs: 'flex-start', md: 'flex-end' }}
+                sx={{ ml: { md: 'auto' }, flexShrink: 0 }}
+              >
+                <Typography color="text.secondary">
+                  {flashcards.length} cards in this deck
+                </Typography>
+                <Button
+                  variant="outlined"
+                  onClick={handleToggleRevealAll}
+                  sx={{ alignSelf: { xs: 'flex-start', md: 'flex-end' } }}
+                >
+                  {allCardsRevealed ? 'Hide all answers' : 'Reveal all answers'}
+                </Button>
+              </Stack>
+            ) : null}
+          </Stack>
         </Stack>
 
         {flashcards.length === 0 ? (
@@ -757,13 +815,18 @@ export default function StudySetPage({ authUser }) {
         ) : (
           <Stack spacing={2}>
             {flashcards.map((card, index) => (
+              (() => {
+                const cardKey = card.id ?? `${studySetId}-${index}`
+                const isRevealed = Boolean(revealedCards[cardKey])
+
+                return (
               <Card
-                key={card.id ?? `${studySetId}-${index}`}
+                key={cardKey}
                 sx={{
                   borderRadius: 3,
                   border: '1px solid',
-                  borderColor: index === visibleIndex ? 'primary.main' : 'divider',
-                  boxShadow: index === visibleIndex ? '0 16px 36px rgba(37, 99, 235, 0.12)' : '0 12px 28px rgba(15, 23, 42, 0.05)',
+                  borderColor: 'divider',
+                  boxShadow: '0 12px 28px rgba(15, 23, 42, 0.05)',
                   overflow: 'hidden',
                 }}
               >
@@ -776,7 +839,7 @@ export default function StudySetPage({ authUser }) {
                     sx={{
                       flex: 1,
                       p: { xs: 2.5, md: 3 },
-                      bgcolor: index === visibleIndex ? '#f7fbff' : '#ffffff',
+                      bgcolor: '#ffffff',
                     }}
                   >
                     <Stack spacing={2} sx={{ height: '100%' }}>
@@ -784,14 +847,8 @@ export default function StudySetPage({ authUser }) {
                         <Chip
                           label={`Card ${index + 1}`}
                           size="small"
-                          color={index === visibleIndex ? 'primary' : 'default'}
-                          variant={index === visibleIndex ? 'filled' : 'outlined'}
+                          variant="outlined"
                         />
-                        {!isQuizDeck ? (
-                          <Button size="small" variant="text" onClick={() => goToCard(index)}>
-                            Open above
-                          </Button>
-                        ) : null}
                       </Stack>
                       <Box>
                         <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em' }}>
@@ -802,9 +859,15 @@ export default function StudySetPage({ authUser }) {
                         </Typography>
                       </Box>
                       {isQuizDeck && card.choices?.length ? (
-                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 'auto' }}>
+                        <Stack spacing={1} sx={{ mt: 'auto' }}>
                           {card.choices.map((choice, choiceIndex) => (
-                            <Chip key={`${card.id ?? index}-choice-${choiceIndex}`} label={choice} size="small" variant="outlined" />
+                            <Chip
+                              key={`${cardKey}-choice-${choiceIndex}`}
+                              label={choice}
+                              size="small"
+                              variant="outlined"
+                              sx={{ justifyContent: 'flex-start', '& .MuiChip-label': { whiteSpace: 'normal' } }}
+                            />
                           ))}
                         </Stack>
                       ) : null}
@@ -816,17 +879,69 @@ export default function StudySetPage({ authUser }) {
                       flex: 1,
                       p: { xs: 2.5, md: 3 },
                       bgcolor: '#f9fbff',
+                      display: 'flex',
+                      flexDirection: 'column',
                     }}
                   >
-                    <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em' }}>
-                      Answer
-                    </Typography>
-                    <Typography sx={{ mt: 1, fontSize: '1.05rem', lineHeight: 1.6 }}>
-                      {card.answer}
-                    </Typography>
+                    <Box
+                      sx={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em' }}>
+                        Answer
+                      </Typography>
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleCardReveal(cardKey)}
+                        sx={{ flexShrink: 0, ml: 2 }}
+                        aria-label={isRevealed ? 'Hide answer' : 'Reveal answer'}
+                      >
+                        {isRevealed ? <VisibilityOffOutlined fontSize="small" /> : <VisibilityOutlined fontSize="small" />}
+                      </IconButton>
+                    </Box>
+                    {isRevealed ? (
+                      <Typography
+                        sx={{
+                          mt: 1,
+                          fontSize: '1.05rem',
+                          lineHeight: 1.6,
+                          flexGrow: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {card.answer}
+                      </Typography>
+                    ) : (
+                      <Box
+                        sx={{
+                          mt: 1,
+                          minHeight: 96,
+                          borderRadius: 2,
+                          border: '1px dashed',
+                          borderColor: 'divider',
+                          bgcolor: '#ffffff',
+                          display: 'grid',
+                          placeItems: 'center',
+                          px: 2,
+                        }}
+                      >
+                        <Typography color="text.secondary" sx={{ textAlign: 'center' }}>
+                          Hidden until you Reveal.
+                        </Typography>
+                      </Box>
+                    )}
                   </Box>
                 </Stack>
               </Card>
+                )
+              })()
             ))}
           </Stack>
         )}
