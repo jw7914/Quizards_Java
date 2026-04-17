@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import quizards.exception.AccessDeniedException;
+import quizards.exception.AIProviderException;
 import quizards.exception.EmptyDeckException;
 
 @RestControllerAdvice
@@ -34,5 +35,15 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Map<String, String> handleBadCredentials(BadCredentialsException exception) {
         return Map.of("error", "Invalid username or password.");
+    }
+
+    @ExceptionHandler(AIProviderException.class)
+    @ResponseStatus(HttpStatus.BAD_GATEWAY)
+    public Map<String, String> handleAiProvider(AIProviderException exception) {
+        String causeMessage = exception.getCause() != null ? exception.getCause().getMessage() : null;
+        return Map.of(
+                "error", exception.getMessage(),
+                "details", causeMessage == null || causeMessage.isBlank() ? "No provider details available." : causeMessage
+        );
     }
 }
