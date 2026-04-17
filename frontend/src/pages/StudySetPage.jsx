@@ -4,10 +4,8 @@ import {
   Box,
   Button,
   Card,
-  CardActionArea,
   Chip,
   Divider,
-  Grid,
   IconButton,
   LinearProgress,
   MenuItem,
@@ -15,14 +13,14 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded'
-import ArrowOutwardRounded from '@mui/icons-material/ArrowOutwardRounded'
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
+import IosShareRounded from '@mui/icons-material/IosShareRounded'
 import TimerOutlined from '@mui/icons-material/TimerOutlined'
 import SectionHeading from '../components/SectionHeading'
-import { fetchMyStudySets, fetchPublicStudySets, fetchStudySession, fetchStudySetDetail } from '../api'
+import { fetchStudySession, fetchStudySetDetail } from '../api'
 
 const STUDY_MODES = [
   { value: 'REPETITION', label: 'Repetition' },
@@ -63,20 +61,18 @@ function createQuizSessionState(session) {
 export default function StudySetPage({ authUser }) {
   const { studySetId } = useParams()
   const [studySet, setStudySet] = useState(null)
-  const [relatedStudySets, setRelatedStudySets] = useState([])
   const [session, setSession] = useState(null)
   const [quizSession, setQuizSession] = useState(null)
   const [pendingQuizSession, setPendingQuizSession] = useState(null)
   const [mode, setMode] = useState('REPETITION')
   const [loading, setLoading] = useState(true)
-  const [relatedLoading, setRelatedLoading] = useState(true)
   const [sessionLoading, setSessionLoading] = useState(false)
   const [error, setError] = useState('')
-  const [relatedError, setRelatedError] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
   const [timedMinutes, setTimedMinutes] = useState('10')
   const [selectedChoice, setSelectedChoice] = useState('')
+  const [shareMessage, setShareMessage] = useState('')
 
   useEffect(() => {
     let active = true
@@ -113,57 +109,6 @@ export default function StudySetPage({ authUser }) {
       active = false
     }
   }, [studySetId, authUser?.authenticated])
-
-  useEffect(() => {
-    let active = true
-
-    async function loadRelatedStudySets() {
-      setRelatedLoading(true)
-      setRelatedError('')
-
-      try {
-        const [publicSets, mySets] = await Promise.all([
-          fetchPublicStudySets(),
-          authUser?.authenticated ? fetchMyStudySets() : Promise.resolve([]),
-        ])
-
-        if (!active) return
-
-        const mergedSets = [...mySets, ...publicSets]
-        const uniqueSets = Array.from(
-          new Map(mergedSets.map((item) => [item.id, item])).values(),
-        )
-
-        uniqueSets.sort((left, right) => {
-          if (left.id === studySetId) return -1
-          if (right.id === studySetId) return 1
-
-          const leftDeckTypeScore = left.deckType === studySet?.deckType ? 1 : 0
-          const rightDeckTypeScore = right.deckType === studySet?.deckType ? 1 : 0
-          if (leftDeckTypeScore !== rightDeckTypeScore) {
-            return rightDeckTypeScore - leftDeckTypeScore
-          }
-
-          return left.title.localeCompare(right.title)
-        })
-
-        setRelatedStudySets(uniqueSets.filter((item) => item.id !== studySetId))
-      } catch (loadError) {
-        if (active) {
-          setRelatedError(loadError.message)
-        }
-      } finally {
-        if (active) {
-          setRelatedLoading(false)
-        }
-      }
-    }
-
-    loadRelatedStudySets()
-    return () => {
-      active = false
-    }
-  }, [authUser?.authenticated, studySetId, studySet?.deckType])
 
   useEffect(() => {
     if (!quizSession || quizSession.mode !== 'TIMED_QUIZ' || quizSession.completed) {
@@ -363,13 +308,59 @@ export default function StudySetPage({ authUser }) {
     handleStartSession()
   }
 
-  const relatedSetsLabel = relatedStudySets.length === 1
-    ? '1 study set'
-    : `${relatedStudySets.length} study sets`
+  const handleShare = async () => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const shareUrl = `${window.location.origin}/study-set/${studySetId}`
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: studySet.title,
+          text: `Study ${studySet.title} on Quizards`,
+          url: shareUrl,
+        })
+        setShareMessage('Share sheet opened.')
+        return
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl)
+        setShareMessage('Link copied to clipboard.')
+        return
+      }
+
+      setShareMessage('Sharing is not available in this browser.')
+    } catch {
+      setShareMessage('Unable to share this deck right now.')
+    }
+  }
 
   return (
     <Stack spacing={5}>
-      <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={2}
+        justifyContent="space-between"
+        alignItems={{ xs: 'flex-start', md: 'flex-start' }}
+      >
+        <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
+        {studySet.visibility === 'PUBLIC' ? (
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<IosShareRounded />}
+            onClick={handleShare}
+            sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0 }}
+          >
+            Share
+          </Button>
+        ) : null}
+      </Stack>
+
+      {shareMessage ? <Alert severity="success">{shareMessage}</Alert> : null}
 
       <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
         <Chip label={studySet.visibility} color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'} variant="outlined" />
@@ -743,118 +734,101 @@ export default function StudySetPage({ authUser }) {
       </Card>
 
       <Stack spacing={3}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          justifyContent="space-between"
-          alignItems={{ xs: 'flex-start', md: 'flex-end' }}
-        >
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'flex-end' }}>
           <Box>
             <Typography
               variant="overline"
               color="text.secondary"
               sx={{ letterSpacing: '0.08em', display: 'block', mb: 0.5 }}
             >
-              More To Study
+              Full Study Set
             </Typography>
             <Typography variant="h4" sx={{ lineHeight: 1.1 }}>
-              Explore more study sets
+              Review every card
             </Typography>
           </Box>
           <Typography color="text.secondary">
-            {relatedLoading ? 'Loading study sets...' : relatedSetsLabel}
+            {flashcards.length} cards in this deck
           </Typography>
         </Stack>
 
-        {relatedError ? <Alert severity="warning">{relatedError}</Alert> : null}
-
-        {relatedLoading ? (
-          <LinearProgress />
-        ) : relatedStudySets.length === 0 ? (
-          <Alert severity="info">No additional study sets are available yet.</Alert>
+        {flashcards.length === 0 ? (
+          <Alert severity="info">This deck does not have any flashcards yet.</Alert>
         ) : (
-          <Grid container spacing={2.5}>
-            {relatedStudySets.map((item) => (
-              <Grid key={item.id} size={{ xs: 12, sm: 6, xl: 4 }}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    borderRadius: 3,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                    boxShadow: '0 18px 38px rgba(15, 23, 42, 0.06)',
-                    overflow: 'hidden',
-                    background: item.deckType === 'QUIZ'
-                      ? 'linear-gradient(180deg, #f7faff 0%, #ffffff 100%)'
-                      : 'linear-gradient(180deg, #ffffff 0%, #f9fbff 100%)',
-                  }}
+          <Stack spacing={2}>
+            {flashcards.map((card, index) => (
+              <Card
+                key={card.id ?? `${studySetId}-${index}`}
+                sx={{
+                  borderRadius: 3,
+                  border: '1px solid',
+                  borderColor: index === visibleIndex ? 'primary.main' : 'divider',
+                  boxShadow: index === visibleIndex ? '0 16px 36px rgba(37, 99, 235, 0.12)' : '0 12px 28px rgba(15, 23, 42, 0.05)',
+                  overflow: 'hidden',
+                }}
+              >
+                <Stack
+                  direction={{ xs: 'column', lg: 'row' }}
+                  divider={<Divider orientation="vertical" flexItem />}
+                  sx={{ minHeight: { lg: 180 } }}
                 >
-                  <CardActionArea
-                    component={RouterLink}
-                    to={`/study-set/${item.id}`}
+                  <Box
                     sx={{
-                      height: '100%',
-                      alignItems: 'stretch',
+                      flex: 1,
+                      p: { xs: 2.5, md: 3 },
+                      bgcolor: index === visibleIndex ? '#f7fbff' : '#ffffff',
                     }}
                   >
-                    <Stack spacing={2} sx={{ p: 2.5, height: '100%' }}>
-                      <Stack direction="row" spacing={1} alignItems="flex-start">
-                        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              fontWeight: 600,
-                              lineHeight: 1.25,
-                              mb: 0.75,
-                              overflowWrap: 'anywhere',
-                            }}
-                          >
-                            {item.title}
-                          </Typography>
-                          <Typography
-                            color="text.secondary"
-                            sx={{
-                              fontSize: '0.95rem',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 3,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden',
-                              minHeight: '4.2em',
-                            }}
-                          >
-                            {item.description || 'No description provided.'}
-                          </Typography>
-                        </Box>
-                        <ArrowOutwardRounded color="primary" sx={{ flexShrink: 0, mt: 0.25 }} />
+                    <Stack spacing={2} sx={{ height: '100%' }}>
+                      <Stack direction="row" spacing={1} alignItems="center" justifyContent="space-between">
+                        <Chip
+                          label={`Card ${index + 1}`}
+                          size="small"
+                          color={index === visibleIndex ? 'primary' : 'default'}
+                          variant={index === visibleIndex ? 'filled' : 'outlined'}
+                        />
+                        {!isQuizDeck ? (
+                          <Button size="small" variant="text" onClick={() => goToCard(index)}>
+                            Open above
+                          </Button>
+                        ) : null}
                       </Stack>
-
-                      <Divider />
-
-                      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 'auto' }}>
-                        <Chip
-                          icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />}
-                          label={`${item.flashcardCount} cards`}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={item.deckType === 'QUIZ' ? 'Practice test' : 'Flashcards'}
-                          size="small"
-                          color={item.deckType === 'QUIZ' ? 'primary' : 'default'}
-                          variant="outlined"
-                        />
-                        <Chip
-                          label={item.visibility}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </Stack>
+                      <Box>
+                        <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em' }}>
+                          Prompt
+                        </Typography>
+                        <Typography sx={{ mt: 1, fontSize: '1.05rem', lineHeight: 1.6 }}>
+                          {card.prompt}
+                        </Typography>
+                      </Box>
+                      {isQuizDeck && card.choices?.length ? (
+                        <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 'auto' }}>
+                          {card.choices.map((choice, choiceIndex) => (
+                            <Chip key={`${card.id ?? index}-choice-${choiceIndex}`} label={choice} size="small" variant="outlined" />
+                          ))}
+                        </Stack>
+                      ) : null}
                     </Stack>
-                  </CardActionArea>
-                </Card>
-              </Grid>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      flex: 1,
+                      p: { xs: 2.5, md: 3 },
+                      bgcolor: '#f9fbff',
+                    }}
+                  >
+                    <Typography variant="overline" color="text.secondary" sx={{ letterSpacing: '0.08em' }}>
+                      Answer
+                    </Typography>
+                    <Typography sx={{ mt: 1, fontSize: '1.05rem', lineHeight: 1.6 }}>
+                      {card.answer}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Card>
             ))}
-          </Grid>
+          </Stack>
         )}
       </Stack>
     </Stack>
