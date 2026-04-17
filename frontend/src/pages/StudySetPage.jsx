@@ -459,9 +459,21 @@ export default function StudySetPage({ authUser }) {
           {!hasSession ? (
             <Stack spacing={2} alignItems="center" sx={{ py: { xs: 4, md: 8 } }}>
               <Typography variant="h5">{formatMode(mode)}</Typography>
-              {mode === 'REPETITION' ? <Typography color="text.secondary">Review due cards first.</Typography> : null}
-              {mode === 'TIMED_QUIZ' ? <Typography color="text.secondary">Race through the deck on a timer.</Typography> : null}
-              {mode === 'STREAK' ? <Typography color="text.secondary">Keep your run going card by card.</Typography> : null}
+              {mode === 'REPETITION' ? (
+                <Typography color="text.secondary">
+                  Any wrong answer gets recycled back into the queue until you answer it correctly.
+                </Typography>
+              ) : null}
+              {mode === 'TIMED_QUIZ' ? (
+                <Typography color="text.secondary">
+                  Answer as many cards as you can before the timer runs out.
+                </Typography>
+              ) : null}
+              {mode === 'STREAK' ? (
+                <Typography color="text.secondary">
+                  You must answer every card correctly in one run or the streak resets back to the start.
+                </Typography>
+              ) : null}
             </Stack>
           ) : quizCompleted ? (
             <Stack spacing={2} alignItems="center" sx={{ py: { xs: 4, md: 8 } }}>
