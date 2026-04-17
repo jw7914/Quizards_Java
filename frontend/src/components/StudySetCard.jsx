@@ -5,7 +5,7 @@ import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 
 export default function StudySetCard({ studySet, showDelete = false, deleting = false, onDelete }) {
-  const deckTypeLabel = studySet.deckType === 'QUIZ' ? 'Quiz cards' : 'Text cards'
+  const deckTypeLabel = studySet.deckType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'
 
   return (
     <Card
