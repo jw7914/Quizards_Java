@@ -1,12 +1,9 @@
 package quizards.ai;
 
+import java.util.concurrent.CompletableFuture;
 import quizards.domain.FlashcardType;
 
 public interface AIService {
 
-    String summarizeNotes(String notes);
-
-    GeneratedDeck generateFlashcardsFromNotes(String notes);
-
-    GeneratedDeck generateFlashcardsFromPrompt(String prompt, FlashcardType cardType);
+    CompletableFuture<GeneratedDeck> generateFlashcardsFromPrompt(String prompt, FlashcardType cardType);
 }

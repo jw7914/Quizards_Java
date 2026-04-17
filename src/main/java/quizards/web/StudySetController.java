@@ -15,6 +15,7 @@ import quizards.study.StudySession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,7 +25,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import quizards.persistence.AppUserEntity;
 import quizards.service.AuthService;
@@ -148,19 +148,17 @@ public class StudySetController {
         return toResponse(studySet, owner.getUsername());
     }
 
-    @GetMapping("/notes/summary")
-    public String summarizeNotes(@RequestParam String notes) {
-        return aiService.summarizeNotes(notes);
-    }
-
     @PostMapping("/ai/generate-draft")
-    public GeneratedDeckResponse generateDraft(@RequestBody GenerateStudySetRequest request, Authentication authentication) {
+    public CompletableFuture<GeneratedDeckResponse> generateDraft(
+            @RequestBody GenerateStudySetRequest request,
+            Authentication authentication
+    ) {
         requireOwner(authentication);
-        GeneratedDeck generatedDeck = aiService.generateFlashcardsFromPrompt(
-                request.prompt(),
-                request.cardType() == null ? FlashcardType.TEXT : request.cardType()
-        );
-        return toDraftResponse(generatedDeck);
+        return aiService.generateFlashcardsFromPrompt(
+                        request.prompt(),
+                        request.cardType() == null ? FlashcardType.TEXT : request.cardType()
+                )
+                .thenApply(this::toDraftResponse);
     }
 
     @PostMapping("/ai/save-generated-study-set")

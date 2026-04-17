@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import quizards.exception.AIProviderException;
@@ -53,11 +55,11 @@ public class GeminiAIService implements AIService {
             Map.entry("twenty", 20)
     );
 
-    private final QuizardsSummaryAssistant summaryAssistant;
     private final QuizardsTextDeckAssistant textDeckAssistant;
     private final QuizardsQuizDeckAssistant quizDeckAssistant;
+    private final Executor aiExecutor;
 
-    public GeminiAIService(String apiKey) {
+    public GeminiAIService(String apiKey, Executor aiExecutor) {
         ChatModel chatModel = GoogleAiGeminiChatModel.builder()
                 .apiKey(apiKey)
                 .modelName("gemini-2.5-flash")
@@ -65,91 +67,58 @@ public class GeminiAIService implements AIService {
                 .supportedCapabilities(RESPONSE_FORMAT_JSON_SCHEMA)
                 .build();
 
-        this.summaryAssistant = AiServices.create(QuizardsSummaryAssistant.class, chatModel);
         this.textDeckAssistant = AiServices.create(QuizardsTextDeckAssistant.class, chatModel);
         this.quizDeckAssistant = AiServices.create(QuizardsQuizDeckAssistant.class, chatModel);
+        this.aiExecutor = aiExecutor;
     }
 
     @Override
-    public String summarizeNotes(String notes) {
-        try {
-            SummaryPayload payload = summaryAssistant.summarize(notes);
-            return payload.summary();
-        } catch (RuntimeException exception) {
-            throw new AIProviderException("Unable to summarize notes with Gemini via LangChain4j.", exception);
-        }
-    }
-
-    @Override
-    public GeneratedDeck generateFlashcardsFromNotes(String notes) {
-        return generateTextDeck("""
-                Create a study set from the student's notes.
-                Focus on the important concepts, definitions, and likely review questions.
-
-                Notes:
-                %s
-                """.formatted(notes));
-    }
-
-    @Override
-    public GeneratedDeck generateFlashcardsFromPrompt(String prompt, FlashcardType cardType) {
+    public CompletableFuture<GeneratedDeck> generateFlashcardsFromPrompt(String prompt, FlashcardType cardType) {
         return cardType == FlashcardType.QUIZ ? generateQuizDeck(prompt) : generateTextDeck(prompt);
     }
 
-    private GeneratedDeck generateTextDeck(String prompt) {
-        Integer requestedCount = extractRequestedCardCount(prompt);
-        try {
-            StudySetDraft draft = textDeckAssistant.generate(buildCardCountInstruction(requestedCount), prompt);
-            List<Flashcard> flashcards = normalizeTextFlashcards(draft.flashcards(), requestedCount).stream()
-                    .map(card -> new TextFlashcard(UUID.randomUUID(), card.prompt(), card.answer()))
-                    .map(Flashcard.class::cast)
-                    .toList();
+    private CompletableFuture<GeneratedDeck> generateTextDeck(String prompt) {
+        return CompletableFuture.supplyAsync(() -> {
+            Integer requestedCount = extractRequestedCardCount(prompt);
+            try {
+                StudySetDraft draft = textDeckAssistant.generate(buildCardCountInstruction(requestedCount), prompt);
+                List<Flashcard> flashcards = normalizeTextFlashcards(draft.flashcards(), requestedCount).stream()
+                        .map(card -> new TextFlashcard(UUID.randomUUID(), card.prompt(), card.answer()))
+                        .map(Flashcard.class::cast)
+                        .toList();
 
-            return new GeneratedDeck(
-                    draft.title(),
-                    draft.summary(),
-                    draft.keyTakeaways(),
-                    flashcards
-            );
-        } catch (RuntimeException exception) {
-            throw new AIProviderException("Unable to generate a study set with Gemini via LangChain4j.", exception);
-        }
+                return new GeneratedDeck(
+                        draft.title(),
+                        draft.summary(),
+                        draft.keyTakeaways(),
+                        flashcards
+                );
+            } catch (RuntimeException exception) {
+                throw new AIProviderException("Unable to generate a study set with Gemini via LangChain4j.", exception);
+            }
+        }, aiExecutor);
     }
 
-    private GeneratedDeck generateQuizDeck(String prompt) {
-        Integer requestedCount = extractRequestedCardCount(prompt);
-        try {
-            QuizStudySetDraft draft = quizDeckAssistant.generate(buildCardCountInstruction(requestedCount), prompt);
-            List<Flashcard> flashcards = normalizeQuizFlashcards(draft.flashcards(), requestedCount).stream()
-                    .map(card -> new QuizFlashcard(UUID.randomUUID(), card.prompt(), card.answer(), card.choices()))
-                    .map(Flashcard.class::cast)
-                    .toList();
+    private CompletableFuture<GeneratedDeck> generateQuizDeck(String prompt) {
+        return CompletableFuture.supplyAsync(() -> {
+            Integer requestedCount = extractRequestedCardCount(prompt);
+            try {
+                QuizStudySetDraft draft = quizDeckAssistant.generate(buildCardCountInstruction(requestedCount), prompt);
+                List<Flashcard> flashcards = normalizeQuizFlashcards(draft.flashcards(), requestedCount).stream()
+                        .map(card -> new QuizFlashcard(UUID.randomUUID(), card.prompt(), card.answer(), card.choices()))
+                        .map(Flashcard.class::cast)
+                        .toList();
 
-            return new GeneratedDeck(
-                    draft.title(),
-                    draft.summary(),
-                    draft.keyTakeaways(),
-                    flashcards
-            );
-        } catch (RuntimeException exception) {
-            throw new AIProviderException("Unable to generate a quiz study set with Gemini via LangChain4j.", exception);
-        }
-    }
-
-    @SystemMessage("""
-            You are Quizards, an educational study assistant.
-            Produce concise, accurate summaries for students.
-            Prioritize the concepts they need to review and retain.
-            """)
-    interface QuizardsSummaryAssistant {
-
-        @UserMessage("""
-                Summarize these notes in 2 to 4 sentences.
-                Keep the wording clear for a student preparing to study.
-
-                {{notes}}
-                """)
-        SummaryPayload summarize(String notes);
+                return new GeneratedDeck(
+                        draft.title(),
+                        draft.summary(),
+                        draft.keyTakeaways(),
+                        flashcards
+                );
+            } catch (RuntimeException exception) {
+                throw new AIProviderException("Unable to generate a quiz study set with Gemini via LangChain4j.", exception);
+            }
+        }, aiExecutor);
     }
 
     @SystemMessage("""
@@ -249,14 +218,6 @@ public class GeminiAIService implements AIService {
             return flashcards;
         }
         return new ArrayList<>(flashcards.subList(0, maximumCount));
-    }
-
-    @Description("A concise notes summary for the student.")
-    record SummaryPayload(
-            @JsonProperty(required = true)
-            @Description("A summary in 2 to 4 sentences.")
-            String summary
-    ) {
     }
 
     @Description("A generated study set draft.")

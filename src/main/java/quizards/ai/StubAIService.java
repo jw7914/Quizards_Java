@@ -6,22 +6,15 @@ import quizards.model.QuizFlashcard;
 import quizards.model.TextFlashcard;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class StubAIService implements AIService {
 
     @Override
-    public String summarizeNotes(String notes) {
-        return "AI summary placeholder for: " + notes;
-    }
-
-    @Override
-    public GeneratedDeck generateFlashcardsFromNotes(String notes) {
-        return buildPlaceholderDeck("Generated from notes", notes);
-    }
-
-    @Override
-    public GeneratedDeck generateFlashcardsFromPrompt(String prompt, FlashcardType cardType) {
-        return buildPlaceholderDeck("Generated from prompt", prompt, cardType == null ? FlashcardType.TEXT : cardType);
+    public CompletableFuture<GeneratedDeck> generateFlashcardsFromPrompt(String prompt, FlashcardType cardType) {
+        return CompletableFuture.completedFuture(
+                buildPlaceholderDeck("Generated from prompt", prompt, cardType == null ? FlashcardType.TEXT : cardType)
+        );
     }
 
     private GeneratedDeck buildPlaceholderDeck(String summaryPrefix, String input) {
