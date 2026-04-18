@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Box, CircularProgress, Container, Stack, Typography } from '@mui/material'
+import { Box, Button, CircularProgress, Container, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { deleteStudySet, fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, fetchRandomPublicStudySets, login, logout, register, updateStudySetVisibility } from './api'
 
@@ -25,6 +25,7 @@ export default function App() {
   const [loadingSets, setLoadingSets] = useState(true)
   const [dashboardError, setDashboardError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [pendingDeleteStudySet, setPendingDeleteStudySet] = useState(null)
   const [updatingVisibilityId, setUpdatingVisibilityId] = useState(null)
 
   const refreshDashboard = useCallback(async (user) => {
@@ -97,16 +98,21 @@ export default function App() {
     navigate('/')
   }
 
-  const handleDeleteStudySet = async (studySet) => {
-    if (!window.confirm(`Delete "${studySet.title}"? This cannot be undone.`)) {
+  const handleDeleteStudySet = (studySet) => {
+    setPendingDeleteStudySet(studySet)
+  }
+
+  const handleConfirmDeleteStudySet = async () => {
+    if (!pendingDeleteStudySet) {
       return
     }
 
-    setDeletingId(studySet.id)
+    setDeletingId(pendingDeleteStudySet.id)
     setDashboardError('')
     try {
-      await deleteStudySet(studySet.id)
+      await deleteStudySet(pendingDeleteStudySet.id)
       await refreshDashboard(authUser)
+      setPendingDeleteStudySet(null)
     } catch (error) {
       setDashboardError(error.message)
     } finally {
@@ -198,6 +204,24 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Container>
+      <Dialog open={Boolean(pendingDeleteStudySet)} onClose={() => setPendingDeleteStudySet(null)} fullWidth maxWidth="xs">
+        <DialogTitle>Delete Deck</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary">
+            {pendingDeleteStudySet
+              ? `Delete "${pendingDeleteStudySet.title}"? This cannot be undone.`
+              : ''}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPendingDeleteStudySet(null)} disabled={Boolean(deletingId)}>
+            Cancel
+          </Button>
+          <Button color="error" variant="contained" onClick={handleConfirmDeleteStudySet} disabled={Boolean(deletingId)}>
+            {deletingId ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

@@ -17,10 +17,6 @@ public class StubAIService implements AIService {
         );
     }
 
-    private GeneratedDeck buildPlaceholderDeck(String summaryPrefix, String input) {
-        return buildPlaceholderDeck(summaryPrefix, input, FlashcardType.TEXT);
-    }
-
     private GeneratedDeck buildPlaceholderDeck(String summaryPrefix, String input, FlashcardType cardType) {
         Flashcard card = cardType == FlashcardType.QUIZ
                 ? new QuizFlashcard(

@@ -327,7 +327,7 @@ export default function CreatePage({ authUser, onCreated }) {
         title="Create Deck"
         subtitle="Build your deck manually or let AI generate from your notes."
       />
-      <Card sx={{ borderTop: '4px solid #34a853' }}>
+      <Card sx={{ borderTop: '4px solid #1a73e8' }}>
         <CardContent sx={{ p: { xs: 3, md: 5 } }}>
           <Stack spacing={4}>
             <Tabs 
