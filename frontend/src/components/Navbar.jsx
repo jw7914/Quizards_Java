@@ -21,23 +21,20 @@ export default function Navbar({ authUser, onLogout }) {
         <Stack direction="row" spacing={2} alignItems="center" sx={{ flexGrow: 1 }}>
           <Avatar
             variant="square"
+            src="/favicon.svg"
+            alt="Quizards logo"
             sx={{
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
               width: 44,
               height: 44,
-              fontWeight: 600,
-              fontSize: '1.25rem',
+              bgcolor: 'transparent',
             }}
-          >
-            Q
-          </Avatar>
+          />
           <Box>
             <Typography variant="h5" sx={{ lineHeight: 1, color: 'text.primary', fontWeight: 500 }}>
               Quizards
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              Advanced Study Platform
+              AI Study Platform
             </Typography>
           </Box>
         </Stack>
