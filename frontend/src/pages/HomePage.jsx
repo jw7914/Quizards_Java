@@ -11,11 +11,41 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import AutoAwesomeRounded from "@mui/icons-material/AutoAwesomeRounded";
-import LockOpenRounded from "@mui/icons-material/LockOpenRounded";
+import PublicRounded from "@mui/icons-material/PublicRounded";
 import MenuBookRounded from "@mui/icons-material/MenuBookRounded";
-import PersonAddAltRounded from "@mui/icons-material/PersonAddAltRounded";
+import PsychologyRounded from "@mui/icons-material/PsychologyRounded";
+import EditNoteRounded from "@mui/icons-material/EditNoteRounded";
 import SectionHeading from "../components/SectionHeading";
 import StudySetCard from "../components/StudySetCard";
+
+function WorkspaceMetric({ label, value, helper, icon }) {
+  return (
+    <Card
+      sx={{
+        height: "100%",
+        borderRadius: 0,
+        boxShadow: "none",
+        border: "1px solid",
+        borderColor: "divider",
+      }}
+    >
+      <CardContent sx={{ p: 2.5 }}>
+        <Stack spacing={1.25}>
+          <Box sx={{ color: "primary.main" }}>{icon}</Box>
+          <Typography variant="h4" sx={{ fontWeight: 600, lineHeight: 1 }}>
+            {value}
+          </Typography>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            {label}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {helper}
+          </Typography>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function OverviewPage({
   authUser,
@@ -25,6 +55,12 @@ export default function OverviewPage({
   mySets,
 }) {
   const isAuthenticated = authUser?.authenticated;
+  const username = authUser?.username || "there";
+  const publicDeckCount = mySets.filter(
+    (studySet) => studySet.visibility === "PUBLIC",
+  ).length;
+  const aiDeckCount = mySets.filter((studySet) => studySet.createdByAi).length;
+  const nonAiDeckCount = mySets.length - aiDeckCount;
 
   return (
     <Stack spacing={5}>
@@ -50,8 +86,16 @@ export default function OverviewPage({
                   }}
                 />
                 <SectionHeading
-                  title="Create an account to unlock your full study workspace."
-                  subtitle="Quizards helps you generate decks with AI, save private study sets, and manage your library once you sign in."
+                  title={
+                    isAuthenticated
+                      ? `Welcome back, ${username}.`
+                      : "Create an account to unlock your full study workspace."
+                  }
+                  subtitle={
+                    isAuthenticated
+                      ? "Your study workspace is ready. Create a new deck, browse public sets, or jump back into your library."
+                      : "Quizards helps you generate decks with AI, save private study sets, and manage your library once you sign in."
+                  }
                 />
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                   <Button
@@ -83,48 +127,7 @@ export default function OverviewPage({
                     >
                       View Library
                     </Button>
-                  ) : (
-                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-                      <Button
-                        component={RouterLink}
-                        to="/login"
-                        variant="outlined"
-                        color="primary"
-                        size="large"
-                        startIcon={<LockOpenRounded />}
-                      >
-                        Login
-                      </Button>
-                      <Button
-                        component={RouterLink}
-                        to="/register"
-                        variant="text"
-                        color="primary"
-                        size="large"
-                        startIcon={<PersonAddAltRounded />}
-                      >
-                        Register
-                      </Button>
-                    </Stack>
-                  )}
-                </Stack>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={3}>
-                  <Box>
-                    <Typography variant="h4">{publicSets.length}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      public decks
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="h4">
-                      {isAuthenticated ? mySets.length : "Sign Up"}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {isAuthenticated
-                        ? "saved in your workspace"
-                        : "to save decks and access AI tools"}
-                    </Typography>
-                  </Box>
+                  ) : null}
                 </Stack>
               </Stack>
             </Grid>
@@ -133,6 +136,59 @@ export default function OverviewPage({
       </Card>
 
       {dashboardError && <Alert severity="error">{dashboardError}</Alert>}
+
+      {isAuthenticated ? (
+        <Stack spacing={4}>
+          <Card sx={{ borderRadius: 0 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Stack spacing={3}>
+                <Box>
+                  <Typography variant="h5" sx={{ mb: 1 }}>
+                    Workspace Snapshot
+                  </Typography>
+                  <Typography color="text.secondary">
+                    Open your library, create another deck, and review the key numbers for your workspace in one place.
+                  </Typography>
+                </Box>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <WorkspaceMetric
+                      label="Decks In Workspace"
+                      value={mySets.length}
+                      helper="All study sets currently saved to your account."
+                      icon={<MenuBookRounded />}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <WorkspaceMetric
+                      label="Originally AI Generated"
+                      value={aiDeckCount}
+                      helper="Study sets that started from the AI generation flow."
+                      icon={<PsychologyRounded />}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <WorkspaceMetric
+                      label="Manually Created"
+                      value={nonAiDeckCount}
+                      helper="Study sets created without the AI generation flow."
+                      icon={<EditNoteRounded />}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <WorkspaceMetric
+                      label="Public Decks"
+                      value={publicDeckCount}
+                      helper="Study sets currently visible on the public browse page."
+                      icon={<PublicRounded />}
+                    />
+                  </Grid>
+                </Grid>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
+      ) : null}
 
       {!isAuthenticated && randomPublicSets.length > 0 ? (
         <Stack spacing={3}>
