@@ -46,6 +46,9 @@ public class StudySetEntity {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "created_by_ai")
+    private Boolean createdByAi = true;
+
     @OneToMany(mappedBy = "studySet", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FlashcardEntity> flashcards = new ArrayList<>();
 
@@ -93,6 +96,14 @@ public class StudySetEntity {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isCreatedByAi() {
+        return createdByAi == null || createdByAi;
+    }
+
+    public void setCreatedByAi(boolean createdByAi) {
+        this.createdByAi = createdByAi;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {

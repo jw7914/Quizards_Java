@@ -13,6 +13,7 @@ public class StudySet {
 
     private final UUID id;
     private final Long ownerUserId;
+    private final boolean createdByAi;
     private String title;
     private String description;
     private Visibility visibility;
@@ -20,12 +21,17 @@ public class StudySet {
     private final Set<Long> sharedWithUserIds;
 
     public StudySet(UUID id, String title, String description, Visibility visibility) {
-        this(id, null, title, description, visibility);
+        this(id, null, true, title, description, visibility);
     }
 
     public StudySet(UUID id, Long ownerUserId, String title, String description, Visibility visibility) {
+        this(id, ownerUserId, true, title, description, visibility);
+    }
+
+    public StudySet(UUID id, Long ownerUserId, boolean createdByAi, String title, String description, Visibility visibility) {
         this.id = Objects.requireNonNull(id, "id must not be null");
         this.ownerUserId = ownerUserId;
+        this.createdByAi = createdByAi;
         this.title = Objects.requireNonNull(title, "title must not be null");
         this.description = Objects.requireNonNull(description, "description must not be null");
         this.visibility = Objects.requireNonNull(visibility, "visibility must not be null");
@@ -43,6 +49,10 @@ public class StudySet {
 
     public Long getOwnerUserId() {
         return ownerUserId;
+    }
+
+    public boolean isCreatedByAi() {
+        return createdByAi;
     }
 
     public void setTitle(String title) {

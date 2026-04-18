@@ -22,6 +22,7 @@ import AddRounded from '@mui/icons-material/AddRounded'
 import { useParams } from 'react-router-dom'
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded'
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
+import AutoAwesomeRounded from '@mui/icons-material/AutoAwesomeRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import IosShareRounded from '@mui/icons-material/IosShareRounded'
@@ -638,6 +639,7 @@ export default function StudySetPage({ authUser }) {
         <Chip label={studySet.visibility} color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'} variant="outlined" />
         <Chip label={`${studySet.flashcardCount} cards`} icon={<CollectionsBookmarkRounded />} color="primary" />
         <Chip label={isQuizDeck ? 'Quiz Deck' : 'Flashcards'} variant="outlined" />
+        {studySet.createdByAi ? <Chip label="Originally AI Generated" icon={<AutoAwesomeRounded />} variant="outlined" sx={{ color: '#6b4fa3', borderColor: '#d8ccf0', bgcolor: '#f6f2fc' }} /> : null}
         {isQuizDeck ? <Chip label={formatMode(quizSession?.mode ?? mode)} variant="outlined" /> : null}
         {isQuizDeck && quizSession?.mode !== 'STREAK' ? <Chip label={`${quizSession?.correctAnswers ?? 0} correct`} variant="outlined" /> : null}
         {isQuizDeck && quizSession?.mode === 'STREAK' ? <Chip label={`Streak ${quizSession?.currentStreak ?? 0}`} variant="outlined" /> : null}

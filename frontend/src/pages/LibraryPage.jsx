@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Alert, Box, Button, Card, CardContent, Chip, Divider, IconButton, LinearProgress, MenuItem, Pagination, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
+import AutoAwesomeRounded from '@mui/icons-material/AutoAwesomeRounded'
 import ArrowOutwardRounded from '@mui/icons-material/ArrowOutwardRounded'
 import BookmarkAddedRounded from '@mui/icons-material/BookmarkAddedRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
@@ -107,6 +108,15 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, updat
               size="small"
               variant="outlined"
             />
+            {studySet.createdByAi ? (
+              <Chip
+                icon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />}
+                label="Originally AI Generated"
+                size="small"
+                variant="outlined"
+                sx={{ color: '#6b4fa3', borderColor: '#d8ccf0', bgcolor: '#f6f2fc' }}
+              />
+            ) : null}
             {studySet.ownerUsername ? (
               <Chip
                 icon={<VisibilityRounded sx={{ fontSize: 16 }} />}

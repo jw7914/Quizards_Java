@@ -12,6 +12,7 @@ public record StudySetDetailResponse(
         String description,
         Visibility visibility,
         FlashcardType deckType,
+        boolean createdByAi,
         int flashcardCount,
         List<FlashcardResponse> flashcards
 ) {

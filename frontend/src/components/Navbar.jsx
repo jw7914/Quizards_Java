@@ -6,6 +6,7 @@ import LockOpenRounded from '@mui/icons-material/LockOpenRounded'
 
 const navItems = [
   { label: 'Home', to: '/' },
+  { label: 'Browse', to: '/browse' },
   { label: 'Create Deck', to: '/create', requiresAuth: true },
   { label: 'Library', to: '/library', requiresAuth: true },
 ]

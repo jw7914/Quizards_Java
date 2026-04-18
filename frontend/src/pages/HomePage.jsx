@@ -64,6 +64,15 @@ export default function OverviewPage({
                   >
                     {isAuthenticated ? "Create Deck" : "Create Account"}
                   </Button>
+                  <Button
+                    component={RouterLink}
+                    to="/browse"
+                    variant="outlined"
+                    color="primary"
+                    size="large"
+                  >
+                    Browse Public Decks
+                  </Button>
                   {isAuthenticated ? (
                     <Button
                       component={RouterLink}

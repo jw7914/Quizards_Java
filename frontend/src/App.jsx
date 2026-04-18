@@ -5,6 +5,7 @@ import { deleteStudySet, fetchAuthUser, fetchMyStudySets, fetchPublicStudySets, 
 
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
+import BrowsePage from './pages/BrowsePage'
 import HomePage from './pages/HomePage'
 import LibraryPage from './pages/LibraryPage'
 import CreatePage from './pages/CreatePage'
@@ -155,6 +156,16 @@ export default function App() {
                 publicSets={publicSets}
                 randomPublicSets={randomPublicSets}
                 mySets={mySets}
+              />
+            }
+          />
+          <Route
+            path="/browse"
+            element={
+              <BrowsePage
+                publicSets={publicSets}
+                loadingSets={loadingSets}
+                dashboardError={dashboardError}
               />
             }
           />

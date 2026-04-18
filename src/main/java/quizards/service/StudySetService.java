@@ -171,6 +171,7 @@ public class StudySetService {
         StudySet studySet = new StudySet(
                 entity.getId(),
                 entity.getOwner().getId(),
+                entity.isCreatedByAi(),
                 entity.getTitle(),
                 entity.getDescription(),
                 entity.getVisibility()

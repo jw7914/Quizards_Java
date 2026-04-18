@@ -218,6 +218,7 @@ public class StudySetController {
                 studySet.getDescription(),
                 studySet.getVisibility(),
                 studySet.getDeckCardType(),
+                studySet.isCreatedByAi(),
                 null,
                 studySet.getCards().size()
         );
@@ -230,6 +231,7 @@ public class StudySetController {
                 studySet.getDescription(),
                 studySet.getVisibility(),
                 studySet.getDeckCardType(),
+                studySet.isCreatedByAi(),
                 ownerUsername,
                 studySet.getCards().size()
         );
@@ -259,6 +261,7 @@ public class StudySetController {
                 studySet.getDescription(),
                 studySet.getVisibility(),
                 studySet.getDeckCardType(),
+                studySet.isCreatedByAi(),
                 studySet.getCards().size(),
                 studySet.getCards().stream()
                         .map(card -> new FlashcardResponse(
