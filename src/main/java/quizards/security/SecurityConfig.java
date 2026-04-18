@@ -29,7 +29,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/auth", "/login", "/register", "/create", "/library", "/study-set/**", "/index.html", "/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/study-sets", "/api/study-sets/**").permitAll()
-                        .requestMatchers("/assets/**", "/favicon.ico", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
+                        .requestMatchers("/assets/**", "/favicon.ico", "/**/*.svg", "/css/**", "/js/**", "/images/**", "/webjars/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
