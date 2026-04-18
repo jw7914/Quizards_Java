@@ -67,8 +67,16 @@ public class StudySetEntity {
         return title;
     }
 
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Visibility getVisibility() {
@@ -98,6 +106,10 @@ public class StudySetEntity {
     public void addFlashcard(FlashcardEntity flashcard) {
         flashcards.add(flashcard);
         flashcard.setStudySet(this);
+    }
+
+    public void clearFlashcards() {
+        flashcards.clear();
     }
 
     @PrePersist

@@ -119,6 +119,37 @@ public class StudySetService {
         return toModel(studySetRepository.save(studySet));
     }
 
+    public StudySet updateStudySet(
+            UUID studySetId,
+            long ownerId,
+            String title,
+            String description,
+            Visibility visibility,
+            List<Flashcard> flashcards
+    ) {
+        inputValidator.requireNonBlank(title, "title");
+        inputValidator.requireNonBlank(description, "description");
+
+        StudySetEntity studySet = studySetRepository.findById(studySetId)
+                .orElseThrow(() -> new IllegalArgumentException("Study set not found."));
+        if (studySet.getOwner().getId() != ownerId) {
+            throw new AccessDeniedException("You do not have access to this study set.");
+        }
+
+        studySet.setTitle(title);
+        studySet.setDescription(description);
+        studySet.setVisibility(visibility);
+        studySet.clearFlashcards();
+        flashcards.forEach(flashcard -> studySet.addFlashcard(new FlashcardEntity(
+                flashcard.getPrompt(),
+                flashcard.getAnswer(),
+                serializeChoices(flashcard),
+                flashcard.getType()
+        )));
+
+        return toModel(studySetRepository.save(studySet));
+    }
+
     private List<StudySetEntity> prepareSortedStudySets(List<StudySetEntity> studySets) {
         List<StudySetEntity> missingCreatedAt = studySets.stream()
                 .filter(studySet -> studySet.getCreatedAt() == null)

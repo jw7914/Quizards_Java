@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -180,6 +181,29 @@ public class StudySetController {
         return toResponse(studySet, owner.getUsername());
     }
 
+    @PutMapping("/study-sets/{studySetId}")
+    public StudySetResponse updateStudySet(
+            @PathVariable UUID studySetId,
+            @RequestBody UpdateStudySetRequest request,
+            Authentication authentication
+    ) {
+        AppUserEntity owner = requireOwner(authentication);
+        List<Flashcard> flashcards = new ArrayList<>();
+        if (request.flashcards() != null) {
+            request.flashcards().forEach(card -> flashcards.add(toFlashcard(card)));
+        }
+
+        StudySet studySet = studySetService.updateStudySet(
+                studySetId,
+                owner.getId(),
+                request.title(),
+                request.description(),
+                request.visibility() == null ? Visibility.PRIVATE : request.visibility(),
+                flashcards
+        );
+        return toResponse(studySet, owner.getUsername());
+    }
+
     private AppUserEntity requireOwner(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated() || "anonymousUser".equals(authentication.getName())) {
             throw new IllegalArgumentException("You must be logged in.");
@@ -230,6 +254,7 @@ public class StudySetController {
     private StudySetDetailResponse toDetailResponse(StudySet studySet) {
         return new StudySetDetailResponse(
                 studySet.getId(),
+                studySet.getOwnerUserId(),
                 studySet.getTitle(),
                 studySet.getDescription(),
                 studySet.getVisibility(),

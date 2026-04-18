@@ -102,6 +102,13 @@ export async function createStudySet(body) {
   })
 }
 
+export async function updateStudySet(studySetId, body) {
+  return request(`/api/study-sets/${studySetId}`, {
+    method: 'PUT',
+    body: JSON.stringify(body),
+  })
+}
+
 export async function generateDraft(body) {
   return request('/api/ai/generate-draft', {
     method: 'POST',

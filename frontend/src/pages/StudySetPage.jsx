@@ -6,23 +6,30 @@ import {
   Card,
   Chip,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   LinearProgress,
   MenuItem,
+  Pagination,
   Stack,
   TextField,
   Typography,
 } from '@mui/material'
+import AddRounded from '@mui/icons-material/AddRounded'
 import { useParams } from 'react-router-dom'
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded'
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
+import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import IosShareRounded from '@mui/icons-material/IosShareRounded'
 import TimerOutlined from '@mui/icons-material/TimerOutlined'
 import VisibilityOffOutlined from '@mui/icons-material/VisibilityOffOutlined'
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined'
 import SectionHeading from '../components/SectionHeading'
-import { fetchStudySession, fetchStudySetDetail } from '../api'
+import { fetchStudySession, fetchStudySetDetail, updateStudySet } from '../api'
 
 const STUDY_MODES = [
   { value: 'REPETITION', label: 'Repetition' },
@@ -60,6 +67,48 @@ function createQuizSessionState(session) {
   }
 }
 
+function createEditableCard(card, fallbackType = 'TEXT') {
+  const type = card.type ?? fallbackType
+  const choices = type === 'QUIZ'
+    ? [...(card.choices?.length ? card.choices : [card.answer ?? '', '', '', '']), '', '', '', ''].slice(0, 4)
+    : ['', '', '', '']
+  const correctChoiceIndex = type === 'QUIZ'
+    ? Math.max(0, choices.findIndex((choice) => choice === card.answer))
+    : 0
+
+  return {
+    id: card.id ?? null,
+    type,
+    prompt: card.prompt ?? '',
+    answer: card.answer ?? '',
+    choices,
+    correctChoiceIndex,
+  }
+}
+
+function trimChoices(choices = []) {
+  return choices.map((choice) => choice.trim())
+}
+
+function toEditableCardPayload(card) {
+  if (card.type === 'QUIZ') {
+    const trimmedChoices = trimChoices(card.choices)
+    return {
+      type: 'QUIZ',
+      prompt: card.prompt.trim(),
+      answer: trimmedChoices[card.correctChoiceIndex] ?? '',
+      choices: trimmedChoices,
+    }
+  }
+
+  return {
+    type: 'TEXT',
+    prompt: card.prompt.trim(),
+    answer: card.answer.trim(),
+    choices: [],
+  }
+}
+
 export default function StudySetPage({ authUser }) {
   const { studySetId } = useParams()
   const [studySet, setStudySet] = useState(null)
@@ -76,6 +125,10 @@ export default function StudySetPage({ authUser }) {
   const [selectedChoice, setSelectedChoice] = useState('')
   const [shareMessage, setShareMessage] = useState('')
   const [revealedCards, setRevealedCards] = useState({})
+  const [editOpen, setEditOpen] = useState(false)
+  const [editCardPage, setEditCardPage] = useState(0)
+  const [editState, setEditState] = useState({ saving: false, error: '' })
+  const [editForm, setEditForm] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -178,7 +231,34 @@ export default function StudySetPage({ authUser }) {
 
   const deckCardType = studySet.deckType ?? 'TEXT'
   const isQuizDeck = deckCardType === 'QUIZ'
+  const isOwner = Boolean(authUser?.authenticated && authUser.id && studySet.ownerId === authUser.id)
   const flashcards = studySet.flashcards ?? []
+  const editCards = editForm?.flashcards ?? []
+  const visibleEditCardPage = Math.min(editCardPage, Math.max(editCards.length - 1, 0))
+  const activeEditCard = editCards[visibleEditCardPage]
+  const activeEditCardComplete = Boolean(
+    activeEditCard && (
+      activeEditCard.type === 'QUIZ'
+        ? activeEditCard.prompt.trim() && trimChoices(activeEditCard.choices).every((choice) => choice)
+        : activeEditCard.prompt.trim() && activeEditCard.answer.trim()
+    ),
+  )
+  const completedEditCards = editCards.filter((card) => {
+    if (card.type === 'QUIZ') {
+      return Boolean(card.prompt.trim() && trimChoices(card.choices).every((choice) => choice))
+    }
+    return Boolean(card.prompt.trim() && card.answer.trim())
+  }).length
+  const hasIncompleteEditCards = editCards.some((card) => {
+    if (card.type === 'QUIZ') {
+      const trimmed = trimChoices(card.choices)
+      const filledChoices = trimmed.filter(Boolean).length
+      return Boolean(card.prompt.trim() || filledChoices > 0)
+        && !(card.prompt.trim() && trimmed.every((choice) => choice))
+    }
+    return Boolean(card.prompt.trim() || card.answer.trim())
+      && !(card.prompt.trim() && card.answer.trim())
+  })
   const quizQueue = quizSession?.queue ?? []
   const displayCards = isQuizDeck ? quizQueue : flashcards
   const cardCount = displayCards.length
@@ -367,7 +447,152 @@ export default function StudySetPage({ authUser }) {
     )
   }
 
+  const handleOpenEdit = () => {
+    setEditForm({
+      title: studySet.title ?? '',
+      description: studySet.description ?? '',
+      visibility: studySet.visibility ?? 'PRIVATE',
+      flashcards: flashcards.map((card) => createEditableCard(card, deckCardType)),
+    })
+    setEditCardPage(0)
+    setEditState({ saving: false, error: '' })
+    setEditOpen(true)
+  }
+
+  const handleCloseEdit = () => {
+    if (editState.saving) {
+      return
+    }
+    setEditOpen(false)
+    setEditCardPage(0)
+    setEditState({ saving: false, error: '' })
+  }
+
+  const handleEditFieldChange = (field, value) => {
+    setEditForm((current) => (current ? { ...current, [field]: value } : current))
+  }
+
+  const handleEditCardChange = (index, field, value) => {
+    setEditForm((current) =>
+      current
+        ? {
+            ...current,
+            flashcards: current.flashcards.map((card, cardIndex) =>
+              cardIndex === index ? { ...card, [field]: value } : card,
+            ),
+          }
+        : current,
+    )
+  }
+
+  const handleEditChoiceChange = (index, choiceIndex, value) => {
+    setEditForm((current) =>
+      current
+        ? {
+            ...current,
+            flashcards: current.flashcards.map((card, cardIndex) =>
+              cardIndex === index
+                ? {
+                    ...card,
+                    choices: card.choices.map((choice, currentChoiceIndex) =>
+                      currentChoiceIndex === choiceIndex ? value : choice,
+                    ),
+                  }
+                : card,
+            ),
+          }
+        : current,
+    )
+  }
+
+  const handleAddEditCard = () => {
+    if (!activeEditCardComplete) {
+      setEditState({ saving: false, error: 'Finish the current card before adding another one.' })
+      return
+    }
+    setEditForm((current) =>
+      current
+        ? {
+            ...current,
+            flashcards: [
+              ...current.flashcards,
+              createEditableCard({ type: deckCardType, prompt: '', answer: '', choices: [] }, deckCardType),
+            ],
+          }
+        : current,
+    )
+    setEditCardPage(editCards.length)
+  }
+
+  const handleRemoveEditCard = (index) => {
+    setEditForm((current) =>
+      current
+        ? {
+            ...current,
+            flashcards: current.flashcards.filter((_, cardIndex) => cardIndex !== index),
+          }
+        : current,
+    )
+    setEditCardPage((currentPage) => {
+      if (editCards.length <= 1) {
+        return 0
+      }
+      if (currentPage > index) {
+        return currentPage - 1
+      }
+      return Math.min(currentPage, editCards.length - 2)
+    })
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editForm) return
+
+    const title = editForm.title.trim()
+    const description = editForm.description.trim()
+    if (!title || !description) {
+      setEditState({ saving: false, error: 'Title and description are required.' })
+      return
+    }
+
+    const hasIncompleteCard = editForm.flashcards.some((card) => {
+      if (card.type === 'QUIZ') {
+        const trimmed = trimChoices(card.choices)
+        return !card.prompt.trim() || trimmed.some((choice) => !choice)
+      }
+      return !card.prompt.trim() || !card.answer.trim()
+    })
+    if (hasIncompleteCard) {
+      setEditState({ saving: false, error: 'Every card must have complete content before saving.' })
+      return
+    }
+
+    setEditState({ saving: true, error: '' })
+    try {
+      await updateStudySet(studySetId, {
+        title,
+        description,
+        visibility: editForm.visibility,
+        flashcards: editForm.flashcards.map(toEditableCardPayload),
+      })
+      const refreshedDetail = await fetchStudySetDetail(studySetId)
+      setStudySet(refreshedDetail)
+      setSession(null)
+      setQuizSession(null)
+      setPendingQuizSession(null)
+      setActiveIndex(0)
+      setFlipped(false)
+      setSelectedChoice('')
+      setRevealedCards({})
+      setEditOpen(false)
+      setEditCardPage(0)
+      setEditState({ saving: false, error: '' })
+    } catch (saveError) {
+      setEditState({ saving: false, error: saveError.message })
+    }
+  }
+
   return (
+    <>
     <Stack spacing={5}>
       <Stack
         direction={{ xs: 'column', md: 'row' }}
@@ -379,17 +604,28 @@ export default function StudySetPage({ authUser }) {
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
           <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
         </Box>
-        {studySet.visibility === 'PUBLIC' ? (
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<IosShareRounded />}
-            onClick={handleShare}
-            sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0, ml: { md: 'auto' } }}
-          >
-            Share
-          </Button>
-        ) : null}
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ ml: { md: 'auto' }, width: { xs: '100%', md: 'auto' } }}>
+          {isOwner ? (
+            <Button
+              variant="contained"
+              onClick={handleOpenEdit}
+              sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0 }}
+            >
+              Edit Deck
+            </Button>
+          ) : null}
+          {studySet.visibility === 'PUBLIC' ? (
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<IosShareRounded />}
+              onClick={handleShare}
+              sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0 }}
+            >
+              Share
+            </Button>
+          ) : null}
+        </Stack>
       </Stack>
 
       {shareMessage ? (
@@ -947,5 +1183,153 @@ export default function StudySetPage({ authUser }) {
         )}
       </Stack>
     </Stack>
+
+    <Dialog open={editOpen} onClose={handleCloseEdit} fullWidth maxWidth="md">
+      <DialogTitle sx={{ fontWeight: 500, borderBottom: '1px solid #dadce0' }}>
+        Edit Deck
+      </DialogTitle>
+      <DialogContent sx={{ pt: 3 }}>
+        <Stack spacing={2.5} sx={{ pt: 1 }}>
+          {editState.error ? <Alert severity="error">{editState.error}</Alert> : null}
+          <TextField
+            label="Title"
+            value={editForm?.title ?? ''}
+            onChange={(event) => handleEditFieldChange('title', event.target.value)}
+            fullWidth
+          />
+          <TextField
+            label="Description"
+            value={editForm?.description ?? ''}
+            onChange={(event) => handleEditFieldChange('description', event.target.value)}
+            fullWidth
+            multiline
+            minRows={3}
+          />
+          <TextField
+            select
+            label="Visibility"
+            value={editForm?.visibility ?? 'PRIVATE'}
+            onChange={(event) => handleEditFieldChange('visibility', event.target.value)}
+            sx={{ maxWidth: 220 }}
+          >
+            <MenuItem value="PRIVATE">PRIVATE</MenuItem>
+            <MenuItem value="PUBLIC">PUBLIC</MenuItem>
+          </TextField>
+
+          <Divider />
+
+          {(editForm?.flashcards ?? []).length === 0 ? (
+            <Alert severity="info">This deck has no cards yet. Add one before saving if you want content in the deck.</Alert>
+          ) : (
+            <Stack key={`edit-card-${visibleEditCardPage}-${editCards.length}`} spacing={2}>
+              <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                  Card {visibleEditCardPage + 1} of {editCards.length}
+                </Typography>
+                <Box sx={{ flexGrow: 1 }} />
+                <IconButton
+                  color="error"
+                  aria-label={`remove card ${visibleEditCardPage + 1}`}
+                  onClick={() => handleRemoveEditCard(visibleEditCardPage)}
+                  disabled={editCards.length === 1}
+                  sx={{
+                    flexShrink: 0,
+                    border: '1px solid',
+                    borderColor: 'error.main',
+                    borderRadius: 0,
+                  }}
+                >
+                  <DeleteOutlineRounded />
+                </IconButton>
+              </Stack>
+              <TextField
+                fullWidth
+                label={deckCardType === 'QUIZ' ? 'Question' : 'Prompt'}
+                value={activeEditCard?.prompt ?? ''}
+                onChange={(event) => handleEditCardChange(visibleEditCardPage, 'prompt', event.target.value)}
+              />
+              {deckCardType === 'QUIZ' ? (
+                <>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Correct Option"
+                    value={activeEditCard?.correctChoiceIndex ?? 0}
+                    onChange={(event) => handleEditCardChange(visibleEditCardPage, 'correctChoiceIndex', Number(event.target.value))}
+                  >
+                    {(activeEditCard?.choices ?? []).map((_, choiceIndex) => (
+                      <MenuItem key={choiceIndex} value={choiceIndex}>
+                        Option {choiceIndex + 1}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  {(activeEditCard?.choices ?? []).map((choice, choiceIndex) => (
+                    <TextField
+                      key={`choice-${choiceIndex}`}
+                      fullWidth
+                      label={`Option ${choiceIndex + 1}`}
+                      value={choice}
+                      onChange={(event) => handleEditChoiceChange(visibleEditCardPage, choiceIndex, event.target.value)}
+                    />
+                  ))}
+                </>
+              ) : (
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  label="Answer"
+                  value={activeEditCard?.answer ?? ''}
+                  onChange={(event) => handleEditCardChange(visibleEditCardPage, 'answer', event.target.value)}
+                />
+              )}
+            </Stack>
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3, pt: 1, justifyContent: 'space-between' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+          <Pagination
+            count={Math.max(editCards.length, 1)}
+            page={visibleEditCardPage + 1}
+            onChange={(_, page) => setEditCardPage(page - 1)}
+            color="primary"
+            shape="rounded"
+            siblingCount={0}
+            boundaryCount={1}
+          />
+          <TextField
+            select
+            size="small"
+            label="Jump To"
+            value={visibleEditCardPage}
+            onChange={(event) => setEditCardPage(Number(event.target.value))}
+            sx={{ minWidth: 120 }}
+          >
+            {editCards.map((_, index) => (
+              <MenuItem key={index} value={index}>
+                Card {index + 1}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Stack>
+        <Stack direction="row" spacing={1}>
+          <Button onClick={handleAddEditCard} startIcon={<AddRounded />} disabled={!activeEditCardComplete}>
+            Add Another Card
+          </Button>
+          <Button variant="outlined" onClick={handleCloseEdit} disabled={editState.saving}>
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveEdit}
+            disabled={editState.saving || !editForm?.title?.trim() || completedEditCards === 0 || hasIncompleteEditCards}
+          >
+          {editState.saving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </Stack>
+      </DialogActions>
+    </Dialog>
+    </>
   )
 }

@@ -7,6 +7,7 @@ import quizards.domain.Visibility;
 
 public record StudySetDetailResponse(
         UUID id,
+        Long ownerId,
         String title,
         String description,
         Visibility visibility,
