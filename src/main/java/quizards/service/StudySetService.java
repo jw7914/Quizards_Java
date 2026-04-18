@@ -59,18 +59,43 @@ public class StudySetService {
     }
 
     public StudySet createStudySet(AppUserEntity owner, String title, String description, Visibility visibility) {
+        return createStudySet(owner, title, description, visibility, false);
+    }
+
+    public StudySet createAiStudySet(AppUserEntity owner, String title, String description, Visibility visibility) {
+        return createStudySet(owner, title, description, visibility, true);
+    }
+
+    private StudySet createStudySet(AppUserEntity owner, String title, String description, Visibility visibility, boolean createdByAi) {
         inputValidator.requireNonBlank(title, "title");
         inputValidator.requireNonBlank(description, "description");
 
         StudySetEntity studySet = new StudySetEntity(title, description, visibility, owner);
+        studySet.setCreatedByAi(createdByAi);
         return toModel(studySetRepository.save(studySet));
     }
 
     public StudySet createStudySet(AppUserEntity owner, String title, String description, Visibility visibility, List<Flashcard> flashcards) {
+        return createStudySet(owner, title, description, visibility, flashcards, false);
+    }
+
+    public StudySet createAiStudySet(AppUserEntity owner, String title, String description, Visibility visibility, List<Flashcard> flashcards) {
+        return createStudySet(owner, title, description, visibility, flashcards, true);
+    }
+
+    private StudySet createStudySet(
+            AppUserEntity owner,
+            String title,
+            String description,
+            Visibility visibility,
+            List<Flashcard> flashcards,
+            boolean createdByAi
+    ) {
         inputValidator.requireNonBlank(title, "title");
         inputValidator.requireNonBlank(description, "description");
 
         StudySetEntity studySet = new StudySetEntity(title, description, visibility, owner);
+        studySet.setCreatedByAi(createdByAi);
         flashcards.forEach(flashcard -> studySet.addFlashcard(new FlashcardEntity(
                 flashcard.getPrompt(),
                 flashcard.getAnswer(),
@@ -81,7 +106,7 @@ public class StudySetService {
     }
 
     public StudySet createStudySetFromDraft(AppUserEntity owner, String title, String description, Visibility visibility, List<TextFlashcard> flashcards) {
-        return createStudySet(owner, title, description, visibility, flashcards.stream()
+        return createAiStudySet(owner, title, description, visibility, flashcards.stream()
                 .map(Flashcard.class::cast)
                 .collect(Collectors.toList()));
     }

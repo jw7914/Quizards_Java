@@ -171,7 +171,7 @@ public class StudySetController {
             request.flashcards().forEach(card -> flashcards.add(toFlashcard(card)));
         }
 
-        StudySet studySet = studySetService.createStudySet(
+        StudySet studySet = studySetService.createAiStudySet(
                 owner,
                 request.title(),
                 request.description(),
