@@ -30,7 +30,15 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
         flexDirection: 'column',
       }}
     >
-      <CardContent sx={{ p: 3, flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <CardContent
+        sx={{
+          p: { xs: 3.5, sm: 3 },
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: { xs: 2.5, sm: 2 },
+        }}
+      >
         <Stack direction="row" justifyContent="space-between" spacing={2} alignItems="flex-start">
           <Typography
             variant="h6"
@@ -60,13 +68,13 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
           {studySet.description || 'No description provided.'}
         </Typography>
         <Divider />
-        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 'auto', alignContent: 'flex-start' }}>
+        <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 'auto', alignContent: 'flex-start', pt: 0.5 }}>
           <Chip icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />} label={`${studySet.flashcardCount} cards`} variant="outlined" />
           <Chip label={deckTypeLabel} variant="outlined" />
           {studySet.createdByAi ? <Chip icon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />} label="Originally AI Generated" variant="outlined" sx={aiGeneratedChipSx} /> : null}
           {studySet.ownerUsername && <Chip icon={<VisibilityRounded sx={{ fontSize: 16 }} />} label={`by ${studySet.ownerUsername}`} variant="outlined" color="primary" />}
         </Stack>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: { xs: 2.5, sm: 2 } }}>
           <Button component={RouterLink} to={`/study-set/${studySet.id}`} variant="contained" color="primary" fullWidth>
             Open Deck
           </Button>
