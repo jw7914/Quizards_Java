@@ -5,6 +5,17 @@ import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkR
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 
+const aiGeneratedChipSx = {
+  maxWidth: '100%',
+  color: '#6b4fa3',
+  borderColor: '#d8ccf0',
+  bgcolor: '#f6f2fc',
+  '& .MuiChip-label': {
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+  },
+}
+
 export default function StudySetCard({ studySet, showDelete = false, deleting = false, onDelete }) {
   const deckTypeLabel = studySet.deckType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'
 
@@ -52,7 +63,7 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 'auto', alignContent: 'flex-start' }}>
           <Chip icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />} label={`${studySet.flashcardCount} cards`} variant="outlined" />
           <Chip label={deckTypeLabel} variant="outlined" />
-          {studySet.createdByAi ? <Chip icon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />} label="Originally AI Generated" variant="outlined" sx={{ color: '#6b4fa3', borderColor: '#d8ccf0', bgcolor: '#f6f2fc' }} /> : null}
+          {studySet.createdByAi ? <Chip icon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />} label="Originally AI Generated" variant="outlined" sx={aiGeneratedChipSx} /> : null}
           {studySet.ownerUsername && <Chip icon={<VisibilityRounded sx={{ fontSize: 16 }} />} label={`by ${studySet.ownerUsername}`} variant="outlined" color="primary" />}
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 2 }}>

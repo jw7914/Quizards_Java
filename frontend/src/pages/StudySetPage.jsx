@@ -38,6 +38,17 @@ const STUDY_MODES = [
   { value: 'STREAK', label: 'Streak' },
 ]
 
+const aiGeneratedChipSx = {
+  maxWidth: '100%',
+  color: '#6b4fa3',
+  borderColor: '#d8ccf0',
+  bgcolor: '#f6f2fc',
+  '& .MuiChip-label': {
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+  },
+}
+
 function formatMode(mode) {
   return STUDY_MODES.find((option) => option.value === mode)?.label ?? mode
 }
@@ -639,7 +650,7 @@ export default function StudySetPage({ authUser }) {
         <Chip label={studySet.visibility} color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'} variant="outlined" />
         <Chip label={`${studySet.flashcardCount} cards`} icon={<CollectionsBookmarkRounded />} color="primary" />
         <Chip label={isQuizDeck ? 'Quiz Deck' : 'Flashcards'} variant="outlined" />
-        {studySet.createdByAi ? <Chip label="Originally AI Generated" icon={<AutoAwesomeRounded />} variant="outlined" sx={{ color: '#6b4fa3', borderColor: '#d8ccf0', bgcolor: '#f6f2fc' }} /> : null}
+        {studySet.createdByAi ? <Chip label="Originally AI Generated" icon={<AutoAwesomeRounded />} variant="outlined" sx={aiGeneratedChipSx} /> : null}
         {isQuizDeck ? <Chip label={formatMode(quizSession?.mode ?? mode)} variant="outlined" /> : null}
         {isQuizDeck && quizSession?.mode !== 'STREAK' ? <Chip label={`${quizSession?.correctAnswers ?? 0} correct`} variant="outlined" /> : null}
         {isQuizDeck && quizSession?.mode === 'STREAK' ? <Chip label={`Streak ${quizSession?.currentStreak ?? 0}`} variant="outlined" /> : null}

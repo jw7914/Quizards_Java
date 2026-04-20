@@ -10,6 +10,16 @@ import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 import SectionHeading from '../components/SectionHeading'
 
 const PAGE_SIZE = 4
+const aiGeneratedChipSx = {
+  maxWidth: '100%',
+  color: '#6b4fa3',
+  borderColor: '#d8ccf0',
+  bgcolor: '#f6f2fc',
+  '& .MuiChip-label': {
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+  },
+}
 
 function LibraryDeckItem({ studySet, showDelete = false, deleting = false, updatingVisibility = false, onDelete, onToggleVisibility }) {
   return (
@@ -114,7 +124,7 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, updat
                 label="Originally AI Generated"
                 size="small"
                 variant="outlined"
-                sx={{ color: '#6b4fa3', borderColor: '#d8ccf0', bgcolor: '#f6f2fc' }}
+                sx={aiGeneratedChipSx}
               />
             ) : null}
             {studySet.ownerUsername ? (
