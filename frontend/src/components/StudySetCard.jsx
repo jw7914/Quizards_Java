@@ -7,10 +7,18 @@ import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 
 const aiGeneratedChipSx = {
   maxWidth: '100%',
+  height: 'auto',
+  alignItems: 'flex-start',
   color: '#6b4fa3',
   borderColor: '#d8ccf0',
   bgcolor: '#f6f2fc',
+  '& .MuiChip-icon': {
+    mt: '6px',
+  },
   '& .MuiChip-label': {
+    display: 'block',
+    paddingTop: '6px',
+    paddingBottom: '6px',
     whiteSpace: 'normal',
     overflowWrap: 'anywhere',
   },
