@@ -14,7 +14,7 @@ COPY pom.xml ./
 COPY src ./src
 COPY --from=frontend-build /app/src/main/resources/static ./src/main/resources/static
 
-RUN mvn -B -DskipTests package
+RUN mvn -B package
 
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
