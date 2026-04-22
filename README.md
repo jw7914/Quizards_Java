@@ -14,6 +14,28 @@ This README focuses on the Java backend and describes each major backend compone
 - PostgreSQL for storage
 - LangChain4j + Google Gemini for AI-generated study content
 
+## Docker Quick Start
+
+The provided `Dockerfile` builds the frontend and backend into a single Spring Boot image.
+
+1. Copy the env template and fill in your values:
+
+  ```bash
+  cp .env.example .env
+  ```
+
+2. Build the image from the repository root:
+
+  ```bash
+  docker build -t quizards .
+  ```
+
+3. Run the container with the env file and port mapping:
+
+  ```bash
+  docker run --rm -p 8080:8080 --env-file .env quizards
+  ```
+
 ## Application Entry Point
 
 `src/main/java/quizards/QuizardsApplication.java`

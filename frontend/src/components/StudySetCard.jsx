@@ -4,25 +4,7 @@ import AutoAwesomeRounded from '@mui/icons-material/AutoAwesomeRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
-
-const aiGeneratedChipSx = {
-  maxWidth: '100%',
-  height: 'auto',
-  alignItems: 'flex-start',
-  color: '#6b4fa3',
-  borderColor: '#d8ccf0',
-  bgcolor: '#f6f2fc',
-  '& .MuiChip-icon': {
-    mt: '6px',
-  },
-  '& .MuiChip-label': {
-    display: 'block',
-    paddingTop: '6px',
-    paddingBottom: '6px',
-    whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
-  },
-}
+import { aiGeneratedChipSx, studySetMetaChipSx } from './studySetChipStyles'
 
 export default function StudySetCard({ studySet, showDelete = false, deleting = false, onDelete }) {
   const deckTypeLabel = studySet.deckType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'
@@ -77,10 +59,10 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
         </Typography>
         <Divider />
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 'auto', alignContent: 'flex-start', pt: 0.5 }}>
-          <Chip icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />} label={`${studySet.flashcardCount} cards`} variant="outlined" />
-          <Chip label={deckTypeLabel} variant="outlined" />
+          <Chip icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />} label={`${studySet.flashcardCount} cards`} variant="outlined" sx={studySetMetaChipSx} />
+          <Chip label={deckTypeLabel} variant="outlined" sx={studySetMetaChipSx} />
           {studySet.createdByAi ? <Chip icon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />} label="Originally AI Generated" variant="outlined" sx={aiGeneratedChipSx} /> : null}
-          {studySet.ownerUsername && <Chip icon={<VisibilityRounded sx={{ fontSize: 16 }} />} label={`by ${studySet.ownerUsername}`} variant="outlined" color="primary" />}
+          {studySet.ownerUsername && <Chip icon={<VisibilityRounded sx={{ fontSize: 16 }} />} label={`by ${studySet.ownerUsername}`} variant="outlined" color="primary" sx={studySetMetaChipSx} />}
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: { xs: 2.5, sm: 2 } }}>
           <Button component={RouterLink} to={`/study-set/${studySet.id}`} variant="contained" color="primary" fullWidth>
