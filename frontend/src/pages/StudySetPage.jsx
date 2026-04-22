@@ -16,6 +16,7 @@ import {
   Pagination,
   Stack,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import AddRounded from '@mui/icons-material/AddRounded'
@@ -26,10 +27,13 @@ import AutoAwesomeRounded from '@mui/icons-material/AutoAwesomeRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import IosShareRounded from '@mui/icons-material/IosShareRounded'
+import LockOutlined from '@mui/icons-material/LockOutlined'
+import PublicRounded from '@mui/icons-material/PublicRounded'
 import TimerOutlined from '@mui/icons-material/TimerOutlined'
 import VisibilityOffOutlined from '@mui/icons-material/VisibilityOffOutlined'
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined'
 import SectionHeading from '../components/SectionHeading'
+import { aiGeneratedChipSx, studySetMetaChipSx, visibilityIconChipSx } from '../components/studySetChipStyles'
 import { fetchStudySession, fetchStudySetDetail, updateStudySet } from '../api'
 
 const STUDY_MODES = [
@@ -37,17 +41,6 @@ const STUDY_MODES = [
   { value: 'TIMED_QUIZ', label: 'Timed Quiz' },
   { value: 'STREAK', label: 'Streak' },
 ]
-
-const aiGeneratedChipSx = {
-  maxWidth: '100%',
-  color: '#6b4fa3',
-  borderColor: '#d8ccf0',
-  bgcolor: '#f6f2fc',
-  '& .MuiChip-label': {
-    whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
-  },
-}
 
 function formatMode(mode) {
   return STUDY_MODES.find((option) => option.value === mode)?.label ?? mode
@@ -647,13 +640,20 @@ export default function StudySetPage({ authUser }) {
       ) : null}
 
       <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-        <Chip label={studySet.visibility} color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'} variant="outlined" />
-        <Chip label={`${studySet.flashcardCount} cards`} icon={<CollectionsBookmarkRounded />} color="primary" />
-        <Chip label={isQuizDeck ? 'Quiz Deck' : 'Flashcards'} variant="outlined" />
+        <Tooltip title={studySet.visibility === 'PUBLIC' ? 'Public' : 'Private'}>
+          <Chip
+            icon={studySet.visibility === 'PUBLIC' ? <PublicRounded sx={{ fontSize: 18 }} /> : <LockOutlined sx={{ fontSize: 18 }} />}
+            color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'}
+            variant="outlined"
+            sx={visibilityIconChipSx}
+          />
+        </Tooltip>
+        <Chip label={`${studySet.flashcardCount} cards`} icon={<CollectionsBookmarkRounded />} color="primary" sx={studySetMetaChipSx} />
+        <Chip label={isQuizDeck ? 'Quiz Deck' : 'Flashcards'} variant="outlined" sx={studySetMetaChipSx} />
         {studySet.createdByAi ? <Chip label="Originally AI Generated" icon={<AutoAwesomeRounded />} variant="outlined" sx={aiGeneratedChipSx} /> : null}
-        {isQuizDeck ? <Chip label={formatMode(quizSession?.mode ?? mode)} variant="outlined" /> : null}
-        {isQuizDeck && quizSession?.mode !== 'STREAK' ? <Chip label={`${quizSession?.correctAnswers ?? 0} correct`} variant="outlined" /> : null}
-        {isQuizDeck && quizSession?.mode === 'STREAK' ? <Chip label={`Streak ${quizSession?.currentStreak ?? 0}`} variant="outlined" /> : null}
+        {isQuizDeck ? <Chip label={formatMode(quizSession?.mode ?? mode)} variant="outlined" sx={studySetMetaChipSx} /> : null}
+        {isQuizDeck && quizSession?.mode !== 'STREAK' ? <Chip label={`${quizSession?.correctAnswers ?? 0} correct`} variant="outlined" sx={studySetMetaChipSx} /> : null}
+        {isQuizDeck && quizSession?.mode === 'STREAK' ? <Chip label={`Streak ${quizSession?.currentStreak ?? 0}`} variant="outlined" sx={studySetMetaChipSx} /> : null}
       </Stack>
 
       <Card sx={{ overflow: 'hidden' }}>

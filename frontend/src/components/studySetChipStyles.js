@@ -1,7 +1,10 @@
 export const studySetMetaChipSx = {
   minHeight: 40,
   height: 'auto',
-  alignItems: 'stretch',
+  width: 'fit-content',
+  maxWidth: '100%',
+  flexShrink: 0,
+  alignItems: 'center',
   '& .MuiChip-icon': {
     alignSelf: 'center',
     my: 'auto',
@@ -12,8 +15,25 @@ export const studySetMetaChipSx = {
     minHeight: '100%',
     paddingTop: '6px',
     paddingBottom: '6px',
-    whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
+    whiteSpace: 'nowrap',
+  },
+}
+
+export const visibilityIconChipSx = {
+  width: 40,
+  height: 40,
+  minWidth: 40,
+  minHeight: 40,
+  maxWidth: 40,
+  flexShrink: 0,
+  justifyContent: 'center',
+  alignItems: 'center',
+  '& .MuiChip-label': {
+    display: 'none',
+  },
+  '& .MuiChip-icon': {
+    margin: 0,
+    fontSize: 18,
   },
 }
 
@@ -22,4 +42,12 @@ export const aiGeneratedChipSx = {
   color: '#6b4fa3',
   borderColor: '#d8ccf0',
   bgcolor: '#f6f2fc',
+  width: 'auto',
+  minWidth: 0,
+  flexShrink: 1,
+  '& .MuiChip-label': {
+    ...studySetMetaChipSx['& .MuiChip-label'],
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+  },
 }

@@ -1,13 +1,16 @@
-import { Button, Card, CardContent, Chip, Divider, Stack, Typography } from '@mui/material'
+import { Button, Card, CardContent, Chip, Divider, Stack, Tooltip, Typography } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
 import AutoAwesomeRounded from '@mui/icons-material/AutoAwesomeRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
+import LockOutlined from '@mui/icons-material/LockOutlined'
+import PublicRounded from '@mui/icons-material/PublicRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
-import { aiGeneratedChipSx, studySetMetaChipSx } from './studySetChipStyles'
+import { aiGeneratedChipSx, studySetMetaChipSx, visibilityIconChipSx } from './studySetChipStyles'
 
 export default function StudySetCard({ studySet, showDelete = false, deleting = false, onDelete }) {
   const deckTypeLabel = studySet.deckType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'
+  const visibilityIsPublic = studySet.visibility === 'PUBLIC'
 
   return (
     <Card
@@ -29,22 +32,27 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
           gap: { xs: 2.5, sm: 2 },
         }}
       >
-        <Stack direction="row" justifyContent="space-between" spacing={2} alignItems="flex-start">
+        <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ width: '100%' }}>
           <Typography
             variant="h6"
             sx={{
               fontWeight: 500,
+              minWidth: 0,
+              flexGrow: 1,
               overflowWrap: 'anywhere',
             }}
           >
             {studySet.title}
           </Typography>
-          <Chip
-            size="small"
-            label={studySet.visibility}
-            color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'}
-            variant="outlined"
-          />
+          <Tooltip title={visibilityIsPublic ? 'Public' : 'Private'}>
+            <Chip
+              size="small"
+              icon={visibilityIsPublic ? <PublicRounded sx={{ fontSize: 18 }} /> : <LockOutlined sx={{ fontSize: 18 }} />}
+              color={visibilityIsPublic ? 'primary' : 'default'}
+              variant="outlined"
+              sx={{ ...visibilityIconChipSx, ml: 'auto' }}
+            />
+          </Tooltip>
         </Stack>
         <Typography
           color="text.secondary"

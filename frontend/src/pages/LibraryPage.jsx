@@ -8,26 +8,9 @@ import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkR
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
 import SectionHeading from '../components/SectionHeading'
+import { aiGeneratedChipSx, studySetMetaChipSx } from '../components/studySetChipStyles'
 
 const PAGE_SIZE = 4
-const aiGeneratedChipSx = {
-  maxWidth: '100%',
-  height: 'auto',
-  alignItems: 'flex-start',
-  color: '#6b4fa3',
-  borderColor: '#d8ccf0',
-  bgcolor: '#f6f2fc',
-  '& .MuiChip-icon': {
-    mt: '6px',
-  },
-  '& .MuiChip-label': {
-    display: 'block',
-    paddingTop: '6px',
-    paddingBottom: '6px',
-    whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
-  },
-}
 
 function LibraryDeckItem({ studySet, showDelete = false, deleting = false, updatingVisibility = false, onDelete, onToggleVisibility }) {
   return (
@@ -120,11 +103,13 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, updat
               label={`${studySet.flashcardCount} cards`}
               size="small"
               variant="outlined"
+              sx={studySetMetaChipSx}
             />
             <Chip
               label={studySet.deckType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'}
               size="small"
               variant="outlined"
+              sx={studySetMetaChipSx}
             />
             {studySet.createdByAi ? (
               <Chip
@@ -142,6 +127,7 @@ function LibraryDeckItem({ studySet, showDelete = false, deleting = false, updat
                 size="small"
                 color="primary"
                 variant="outlined"
+                sx={studySetMetaChipSx}
               />
             ) : null}
           </Stack>
