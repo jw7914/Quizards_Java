@@ -292,6 +292,21 @@ export default function StudySetPage({ authUser }) {
 
   const hasSession = isQuizDeck ? Boolean(quizSession) : true
   const quizCompleted = Boolean(quizSession?.completed)
+  const primaryChips = [
+    <Chip key="count" label={`${studySet.flashcardCount} cards`} icon={<CollectionsBookmarkRounded />} color="primary" sx={studySetMetaChipSx} />,
+    <Chip key="type" label={isQuizDeck ? 'Quiz Deck' : 'Flashcards'} variant="outlined" sx={studySetMetaChipSx} />,
+  ]
+  const secondaryChips = [
+    ...(studySet.createdByAi
+      ? [<Chip key="ai-generated" label="Originally AI Generated" icon={<AutoAwesomeRounded />} variant="outlined" sx={aiGeneratedChipSx} />]
+      : []),
+    ...(isQuizDeck
+      ? [<Chip key="mode" label={formatMode(quizSession?.mode ?? mode)} variant="outlined" sx={studySetMetaChipSx} />]
+      : []),
+    ...(isQuizDeck && quizSession?.mode === 'STREAK'
+      ? [<Chip key="streak" label={`Streak ${quizSession?.currentStreak ?? 0}`} variant="outlined" sx={studySetMetaChipSx} />]
+      : []),
+  ]
 
   const handleQuizAnswer = (choice) => {
     if (!quizSession || quizSession.completed || selectedChoice) {
@@ -599,62 +614,88 @@ export default function StudySetPage({ authUser }) {
   return (
     <>
     <Stack spacing={5}>
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        spacing={2}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', md: 'flex-start' }}
-        sx={{ width: '100%' }}
+      <Card
+        sx={{
+          overflow: 'hidden',
+          borderRadius: 4,
+          border: '1px solid',
+          borderColor: 'divider',
+          boxShadow: '0 18px 40px rgba(15, 23, 42, 0.06)',
+        }}
       >
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
+        <Box
+          sx={{
+            px: { xs: 2.5, md: 4 },
+            py: { xs: 3, md: 4 },
+            background: 'linear-gradient(135deg, #f4f8ff 0%, #ffffff 55%, #f8fbff 100%)',
+          }}
+        >
+          <Stack
+            direction={{ xs: 'column', lg: 'row' }}
+            spacing={3}
+            justifyContent="space-between"
+            alignItems={{ xs: 'flex-start', lg: 'center' }}
+            sx={{ width: '100%' }}
+          >
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <SectionHeading title={studySet.title} subtitle={studySet.description || 'No description provided.'} />
+            </Box>
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={1.5}
+              sx={{ width: { xs: '100%', lg: 'auto' } }}
+            >
+              {isOwner ? (
+                <Button
+                  variant="contained"
+                  onClick={handleOpenEdit}
+                  sx={{ alignSelf: { xs: 'stretch', lg: 'flex-start' }, flexShrink: 0 }}
+                >
+                  Edit Deck
+                </Button>
+              ) : null}
+              {studySet.visibility === 'PUBLIC' ? (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<IosShareRounded />}
+                  onClick={handleShare}
+                  sx={{ alignSelf: { xs: 'stretch', lg: 'flex-start' }, flexShrink: 0 }}
+                >
+                  Share
+                </Button>
+              ) : null}
+            </Stack>
+          </Stack>
         </Box>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ ml: { md: 'auto' }, width: { xs: '100%', md: 'auto' } }}>
-          {isOwner ? (
-            <Button
-              variant="contained"
-              onClick={handleOpenEdit}
-              sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0 }}
-            >
-              Edit Deck
-            </Button>
-          ) : null}
-          {studySet.visibility === 'PUBLIC' ? (
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<IosShareRounded />}
-              onClick={handleShare}
-              sx={{ alignSelf: { xs: 'stretch', md: 'flex-start' }, flexShrink: 0 }}
-            >
-              Share
-            </Button>
-          ) : null}
-        </Stack>
-      </Stack>
+        <Divider />
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
+          <Stack spacing={1.5}>
+            <Stack direction="row" spacing={1.25} flexWrap="wrap" useFlexGap alignItems="center">
+              <Tooltip title={studySet.visibility === 'PUBLIC' ? 'Public' : 'Private'}>
+                <Chip
+                  icon={studySet.visibility === 'PUBLIC' ? <PublicRounded sx={{ fontSize: 18 }} /> : <LockOutlined sx={{ fontSize: 18 }} />}
+                  color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'}
+                  variant="outlined"
+                  sx={visibilityIconChipSx}
+                />
+              </Tooltip>
+              {primaryChips}
+            </Stack>
+            {secondaryChips.length > 0 ? (
+              <Stack direction="row" spacing={1.25} flexWrap="wrap" useFlexGap>
+                {secondaryChips}
+              </Stack>
+            ) : null}
+          </Stack>
+        </Box>
+      </Card>
 
       {shareMessage ? (
         <Alert severity="success" onClose={() => setShareMessage('')}>
           {shareMessage}
         </Alert>
       ) : null}
-
-      <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-        <Tooltip title={studySet.visibility === 'PUBLIC' ? 'Public' : 'Private'}>
-          <Chip
-            icon={studySet.visibility === 'PUBLIC' ? <PublicRounded sx={{ fontSize: 18 }} /> : <LockOutlined sx={{ fontSize: 18 }} />}
-            color={studySet.visibility === 'PUBLIC' ? 'primary' : 'default'}
-            variant="outlined"
-            sx={visibilityIconChipSx}
-          />
-        </Tooltip>
-        <Chip label={`${studySet.flashcardCount} cards`} icon={<CollectionsBookmarkRounded />} color="primary" sx={studySetMetaChipSx} />
-        <Chip label={isQuizDeck ? 'Quiz Deck' : 'Flashcards'} variant="outlined" sx={studySetMetaChipSx} />
-        {studySet.createdByAi ? <Chip label="Originally AI Generated" icon={<AutoAwesomeRounded />} variant="outlined" sx={aiGeneratedChipSx} /> : null}
-        {isQuizDeck ? <Chip label={formatMode(quizSession?.mode ?? mode)} variant="outlined" sx={studySetMetaChipSx} /> : null}
-        {isQuizDeck && quizSession?.mode !== 'STREAK' ? <Chip label={`${quizSession?.correctAnswers ?? 0} correct`} variant="outlined" sx={studySetMetaChipSx} /> : null}
-        {isQuizDeck && quizSession?.mode === 'STREAK' ? <Chip label={`Streak ${quizSession?.currentStreak ?? 0}`} variant="outlined" sx={studySetMetaChipSx} /> : null}
-      </Stack>
 
       <Card sx={{ overflow: 'hidden' }}>
         {(sessionLoading || loading) ? (
@@ -671,6 +712,14 @@ export default function StudySetPage({ authUser }) {
         ) : null}
 
         <Stack spacing={3} sx={{ p: { xs: 3, md: 4 } }}>
+          {isQuizDeck && quizSession?.mode !== 'STREAK' ? (
+            <Typography color="text.secondary" sx={{ fontSize: '0.95rem' }}>
+              {hasSession
+                ? `${quizSession?.correctAnswers ?? 0} correct out of ${quizSession?.answeredCount ?? 0} answered`
+                : '0 correct so far'}
+            </Typography>
+          ) : null}
+
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={2}
@@ -932,7 +981,7 @@ export default function StudySetPage({ authUser }) {
                             {selectedChoice === activeCard.answer ? 'Correct' : `Correct answer: ${activeCard.answer}`}
                           </Alert>
                           <Button variant="contained" onClick={handleNextQuizCard}>
-                            {quizSession?.mode === 'REPETITION' && !quizSession?.lastAnswerCorrect ? 'Try Next Card' : 'Continue'}
+                            Next Card
                           </Button>
                         </Stack>
                       ) : null}

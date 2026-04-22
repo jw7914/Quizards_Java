@@ -1,7 +1,7 @@
 export const studySetMetaChipSx = {
   minHeight: 40,
   height: 'auto',
-  width: 'fit-content',
+  width: 'auto',
   maxWidth: '100%',
   flexShrink: 0,
   alignItems: 'center',
@@ -44,10 +44,11 @@ export const aiGeneratedChipSx = {
   bgcolor: '#f6f2fc',
   width: 'auto',
   minWidth: 0,
-  flexShrink: 1,
+  flexShrink: 0,
   '& .MuiChip-label': {
     ...studySetMetaChipSx['& .MuiChip-label'],
     whiteSpace: 'normal',
-    overflowWrap: 'anywhere',
+    overflowWrap: 'break-word',
+    wordBreak: 'normal',
   },
 }
