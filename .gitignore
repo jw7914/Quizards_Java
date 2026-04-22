@@ -6,5 +6,4 @@ target/
 .vscode
 node_modules/
 src/main/resources/static
-quizards-eb.zip
-prepare.sh
+.codex

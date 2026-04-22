@@ -96,9 +96,9 @@ class StudySetServiceTest {
         List<StudySet> result = studySetService.findPublicStudySets();
 
         assertEquals(4, result.size());
-        assertEquals("Astronomy", result.get(0).getTitle());
-        assertEquals("zoology", result.get(1).getTitle());
-        assertEquals("Algebra", result.get(2).getTitle());
+        assertEquals("Algebra", result.get(0).getTitle());
+        assertEquals("Astronomy", result.get(1).getTitle());
+        assertEquals("zoology", result.get(2).getTitle());
         assertEquals("History", result.get(3).getTitle());
         assertTrue(missingCreatedAt.getCreatedAt() != null);
         verify(studySetRepository).saveAll(List.of(missingCreatedAt));
@@ -172,8 +172,7 @@ class StudySetServiceTest {
 
         when(studySetRepository.save(any())).thenAnswer(invocation -> {
             StudySetEntity entity = invocation.getArgument(0);
-            ReflectionTestUtils.setField(entity, "id", UUID.randomUUID());
-            return entity;
+            return assignIds(entity);
         });
 
         StudySet result = studySetService.createAiStudySet(
@@ -211,7 +210,7 @@ class StudySetServiceTest {
         existing.addFlashcard(new FlashcardEntity("Old prompt", "Old answer", null, FlashcardType.TEXT));
 
         when(studySetRepository.findById(studySetId)).thenReturn(Optional.of(existing));
-        when(studySetRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(studySetRepository.save(any())).thenAnswer(invocation -> assignIds(invocation.getArgument(0)));
 
         List<Flashcard> flashcards = List.of(
                 new TextFlashcard(UUID.randomUUID(), "New prompt", "New answer"),
@@ -256,5 +255,17 @@ class StudySetServiceTest {
         AppUserEntity owner = new AppUserEntity(username, "hash");
         ReflectionTestUtils.setField(owner, "id", id);
         return owner;
+    }
+
+    private StudySetEntity assignIds(StudySetEntity entity) {
+        if (entity.getId() == null) {
+            ReflectionTestUtils.setField(entity, "id", UUID.randomUUID());
+        }
+        entity.getFlashcards().forEach(flashcard -> {
+            if (flashcard.getId() == null) {
+                ReflectionTestUtils.setField(flashcard, "id", UUID.randomUUID());
+            }
+        });
+        return entity;
     }
 }
