@@ -52,3 +52,15 @@ export const aiGeneratedChipSx = {
     wordBreak: 'normal',
   },
 }
+
+export const aiGeneratedIconChipSx = {
+  ...visibilityIconChipSx,
+  color: '#6b4fa3',
+  borderColor: '#d8ccf0',
+  bgcolor: '#f6f2fc',
+  '& .MuiChip-icon': {
+    margin: 0,
+    fontSize: 18,
+    color: '#6b4fa3',
+  },
+}

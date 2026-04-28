@@ -6,7 +6,7 @@ import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
 import LockOutlined from '@mui/icons-material/LockOutlined'
 import PublicRounded from '@mui/icons-material/PublicRounded'
 import VisibilityRounded from '@mui/icons-material/VisibilityRounded'
-import { aiGeneratedChipSx, studySetMetaChipSx, visibilityIconChipSx } from './studySetChipStyles'
+import { aiGeneratedIconChipSx, studySetMetaChipSx, visibilityIconChipSx } from './studySetChipStyles'
 
 export default function StudySetCard({ studySet, showDelete = false, deleting = false, onDelete }) {
   const deckTypeLabel = studySet.deckType === 'QUIZ' ? 'Quiz Deck' : 'Flashcards'
@@ -69,7 +69,11 @@ export default function StudySetCard({ studySet, showDelete = false, deleting = 
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 'auto', alignContent: 'flex-start', pt: 0.5 }}>
           <Chip icon={<CollectionsBookmarkRounded sx={{ fontSize: 16 }} />} label={`${studySet.flashcardCount} cards`} variant="outlined" sx={studySetMetaChipSx} />
           <Chip label={deckTypeLabel} variant="outlined" sx={studySetMetaChipSx} />
-          {studySet.createdByAi ? <Chip icon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />} label="Originally AI Generated" variant="outlined" sx={aiGeneratedChipSx} /> : null}
+          {studySet.createdByAi ? (
+            <Tooltip title="Originally AI Generated">
+              <Chip label="" icon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />} variant="outlined" sx={aiGeneratedIconChipSx} />
+            </Tooltip>
+          ) : null}
           {studySet.ownerUsername && <Chip icon={<VisibilityRounded sx={{ fontSize: 16 }} />} label={`by ${studySet.ownerUsername}`} variant="outlined" color="primary" sx={studySetMetaChipSx} />}
         </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: { xs: 2.5, sm: 2 } }}>
