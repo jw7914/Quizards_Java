@@ -114,17 +114,10 @@ export default function CreatePage({ authUser, onCreated }) {
   const [draftState, setDraftState] = useState({ loading: false, error: '', saving: false })
 
   const createTemplate = async () => {
-    const sanitizedCards = manualCards
-      .map(getCardPayload)
-      .filter((card) => card.prompt || card.answer || card.choices.some(Boolean))
+    const cardsPayload = manualCards.map(getCardPayload)
 
-    if (sanitizedCards.length === 0) {
+    if (cardsPayload.length === 0) {
       setManualState({ loading: false, error: 'Add at least one flashcard before creating the deck.', success: '' })
-      return
-    }
-
-    if (sanitizedCards.some((card) => !card.prompt || !card.answer)) {
-      setManualState({ loading: false, error: 'Each flashcard needs both a prompt and an answer.', success: '' })
       return
     }
 
@@ -133,7 +126,7 @@ export default function CreatePage({ authUser, onCreated }) {
       const created = await createStudySet({
         ...manualForm,
         description: manualForm.description.trim() || 'No description provided.',
-        flashcards: sanitizedCards,
+        flashcards: cardsPayload,
       })
       setManualState({ loading: false, error: '', success: 'Deck created.' })
       await onCreated(authUser)
@@ -163,13 +156,20 @@ export default function CreatePage({ authUser, onCreated }) {
   const handleSaveDraft = async () => {
     if (!draft) return
 
+    const cardsPayload = draft.flashcards.map(getCardPayload)
+
+    if (cardsPayload.length === 0) {
+      setDraftState((current) => ({ ...current, saving: false, error: 'Add at least one flashcard before saving the deck.' }))
+      return
+    }
+
     setDraftState((current) => ({ ...current, saving: true, error: '' }))
     try {
       const saved = await saveGeneratedStudySet({
         title: draft.title.trim(),
         description: draft.summary.trim() || 'No description provided.',
         visibility: aiVisibility,
-        flashcards: draft.flashcards.map(getCardPayload),
+        flashcards: cardsPayload,
       })
       await onCreated(authUser)
       navigate(`/study-set/${saved.id}`)

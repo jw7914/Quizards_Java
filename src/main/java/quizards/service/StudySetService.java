@@ -93,6 +93,7 @@ public class StudySetService {
     ) {
         inputValidator.requireNonBlank(title, "title");
         inputValidator.requireNonBlank(description, "description");
+        inputValidator.requireCompleteFlashcards(flashcards, "flashcards");
 
         StudySetEntity studySet = new StudySetEntity(title, description, visibility, owner);
         studySet.setCreatedByAi(createdByAi);
@@ -154,6 +155,7 @@ public class StudySetService {
     ) {
         inputValidator.requireNonBlank(title, "title");
         inputValidator.requireNonBlank(description, "description");
+        inputValidator.requireCompleteFlashcards(flashcards, "flashcards");
 
         StudySetEntity studySet = studySetRepository.findById(studySetId)
                 .orElseThrow(() -> new IllegalArgumentException("Study set not found."));

@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import quizards.exception.AccessDeniedException;
 import quizards.exception.AIProviderException;
+import quizards.exception.EmptyCardException;
 import quizards.exception.EmptyDeckException;
+import quizards.exception.ValidationException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -24,6 +26,18 @@ public class ApiExceptionHandler {
     @ExceptionHandler(EmptyDeckException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map<String, String> handleEmptyDeck(EmptyDeckException exception) {
+        return Map.of("error", exception.getMessage());
+    }
+
+    @ExceptionHandler(EmptyCardException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleEmptyCard(EmptyCardException exception) {
+        return Map.of("error", exception.getMessage());
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> handleValidation(ValidationException exception) {
         return Map.of("error", exception.getMessage());
     }
 

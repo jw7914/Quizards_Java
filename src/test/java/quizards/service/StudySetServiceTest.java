@@ -24,6 +24,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import quizards.domain.FlashcardType;
 import quizards.domain.Visibility;
 import quizards.exception.AccessDeniedException;
+import quizards.exception.EmptyCardException;
+import quizards.exception.ValidationException;
 import quizards.model.Flashcard;
 import quizards.model.QuizFlashcard;
 import quizards.model.StudySet;
@@ -40,13 +42,13 @@ class StudySetServiceTest {
     @Mock
     private StudySetRepository studySetRepository;
 
-    @Mock
     private InputValidator inputValidator;
 
     private StudySetService studySetService;
 
     @BeforeEach
     void setUp() {
+        inputValidator = new InputValidator();
         studySetService = new StudySetService(studySetRepository, inputValidator);
     }
 
@@ -193,6 +195,46 @@ class StudySetServiceTest {
         assertEquals(FlashcardType.QUIZ, savedEntity.getFlashcards().get(0).getType());
         assertTrue(result.isCreatedByAi());
         assertTrue(result.isQuizDeck());
+    }
+
+    @Test
+    void createAiStudySetRejectsBlankFlashcards() {
+        StudySetService validatingService = new StudySetService(studySetRepository, new InputValidator());
+        AppUserEntity owner = appUser(21L, "alice");
+
+        ValidationException exception = assertThrows(
+                ValidationException.class,
+                () -> validatingService.createAiStudySet(
+                        owner,
+                        "Math",
+                        "Practice arithmetic",
+                        Visibility.PUBLIC,
+                        List.of(new TextFlashcard(UUID.randomUUID(), "", "Filled answer"))
+                )
+        );
+
+        assertEquals("flashcards[0].prompt must not be blank.", exception.getMessage());
+        verify(studySetRepository, never()).save(any());
+    }
+
+    @Test
+    void createAiStudySetRejectsEmptyFlashcards() {
+        StudySetService validatingService = new StudySetService(studySetRepository, new InputValidator());
+        AppUserEntity owner = appUser(21L, "alice");
+
+        EmptyCardException exception = assertThrows(
+                EmptyCardException.class,
+                () -> validatingService.createAiStudySet(
+                        owner,
+                        "Math",
+                        "Practice arithmetic",
+                        Visibility.PUBLIC,
+                        List.of(new TextFlashcard(UUID.randomUUID(), "", ""))
+                )
+        );
+
+        assertEquals("flashcards[0] must not be empty.", exception.getMessage());
+        verify(studySetRepository, never()).save(any());
     }
 
     @Test
