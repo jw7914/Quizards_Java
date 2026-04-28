@@ -57,22 +57,6 @@ function isCardComplete(card) {
   return Boolean(card.prompt.trim() && card.answer.trim())
 }
 
-function hasPartialCard(card) {
-  if (!card) return false
-
-  if (card.type === 'QUIZ') {
-    const trimmedPrompt = card.prompt.trim()
-    const trimmedChoices = trimChoices(card.choices)
-    const filledChoices = trimmedChoices.filter(Boolean).length
-    return Boolean(trimmedPrompt || filledChoices > 0)
-      && !(trimmedPrompt && trimmedChoices.every((choice) => choice))
-  }
-
-  const trimmedPrompt = card.prompt.trim()
-  const trimmedAnswer = card.answer.trim()
-  return (trimmedPrompt && !trimmedAnswer) || (!trimmedPrompt && trimmedAnswer)
-}
-
 function normalizeDraftCard(card, fallbackType = 'TEXT') {
   const type = card.type ?? fallbackType
   const fallbackQuizChoices = [
@@ -95,6 +79,37 @@ function normalizeDraftCard(card, fallbackType = 'TEXT') {
     choices,
     correctChoiceIndex,
   }
+}
+
+function formatCardValidationError(message, cardType = 'TEXT') {
+  if (!message) return ''
+
+  const emptyCardMatch = message.match(/^flashcards\[(\d+)\] must not be empty\.$/)
+  if (emptyCardMatch) {
+    return `Card ${Number(emptyCardMatch[1]) + 1} is empty. Add a ${cardType === 'QUIZ' ? 'question and answer choices' : 'prompt and answer'} or remove the card before saving.`
+  }
+
+  const promptMatch = message.match(/^flashcards\[(\d+)\]\.prompt must not be blank\.$/)
+  if (promptMatch) {
+    return `Card ${Number(promptMatch[1]) + 1} is missing its ${cardType === 'QUIZ' ? 'question' : 'prompt'}.`
+  }
+
+  const answerMatch = message.match(/^flashcards\[(\d+)\]\.answer must not be blank\.$/)
+  if (answerMatch) {
+    return `Card ${Number(answerMatch[1]) + 1} is missing its answer.`
+  }
+
+  const choiceMatch = message.match(/^flashcards\[(\d+)\]\.choices\[(\d+)\] must not be blank\.$/)
+  if (choiceMatch) {
+    return `Card ${Number(choiceMatch[1]) + 1} is missing text for option ${Number(choiceMatch[2]) + 1}.`
+  }
+
+  const emptyChoicesMatch = message.match(/^flashcards\[(\d+)\]\.choices must not be empty\.$/)
+  if (emptyChoicesMatch) {
+    return `Card ${Number(emptyChoicesMatch[1]) + 1} needs answer choices before it can be saved.`
+  }
+
+  return message
 }
 
 export default function CreatePage({ authUser, onCreated }) {
@@ -132,7 +147,11 @@ export default function CreatePage({ authUser, onCreated }) {
       await onCreated(authUser)
       navigate(`/study-set/${created.id}`)
     } catch (error) {
-      setManualState({ loading: false, error: error.message, success: '' })
+      setManualState({
+        loading: false,
+        error: formatCardValidationError(error.message, manualForm.cardType),
+        success: '',
+      })
     }
   }
 
@@ -174,7 +193,11 @@ export default function CreatePage({ authUser, onCreated }) {
       await onCreated(authUser)
       navigate(`/study-set/${saved.id}`)
     } catch (error) {
-      setDraftState((current) => ({ ...current, saving: false, error: error.message }))
+      setDraftState((current) => ({
+        ...current,
+        saving: false,
+        error: formatCardValidationError(error.message, draft.cardType ?? aiCardType),
+      }))
     }
   }
 
@@ -309,14 +332,10 @@ export default function CreatePage({ authUser, onCreated }) {
     })
   }
 
-  const completedManualCards = manualCards.filter(isCardComplete).length
-  const hasIncompleteManualCards = manualCards.some(hasPartialCard)
   const visibleManualCardPage = Math.min(manualCardPage, Math.max(manualCards.length - 1, 0))
   const activeManualCard = manualCards[visibleManualCardPage] ?? manualCards[0]
   const activeManualCardComplete = isCardComplete(activeManualCard)
   const draftCards = draft?.flashcards ?? []
-  const completedDraftCards = draftCards.filter(isCardComplete).length
-  const hasIncompleteDraftCards = draftCards.some(hasPartialCard)
   const visibleDraftCardPage = Math.min(draftCardPage, Math.max(draftCards.length - 1, 0))
   const activeDraftCard = draftCards[visibleDraftCardPage] ?? draftCards[0]
   const activeDraftCardComplete = isCardComplete(activeDraftCard)
@@ -396,7 +415,7 @@ export default function CreatePage({ authUser, onCreated }) {
                     <MenuItem value="QUIZ">Quiz</MenuItem>
                   </TextField>
                 </Stack>
-                {manualState.error && <Alert severity="error">{manualState.error}</Alert>}
+                {manualState.error && !manualCardsOpen ? <Alert severity="error">{manualState.error}</Alert> : null}
                 {manualState.success && <Alert severity="success">{manualState.success}</Alert>}
                 <Button
                   variant="contained"
@@ -475,7 +494,7 @@ export default function CreatePage({ authUser, onCreated }) {
                     </Button>
                   </Stack>
                 )}
-                {draftState.error && <Alert severity="error">{draftState.error}</Alert>}
+                {draftState.error && !draftOpen ? <Alert severity="error">{draftState.error}</Alert> : null}
                 <Button
                   variant="contained"
                   color="primary"
@@ -510,7 +529,7 @@ export default function CreatePage({ authUser, onCreated }) {
               Add at least one prompt and answer. You can add more cards now or come back and edit the deck later.
             </Typography>
             {manualState.error ? <Alert severity="error">{manualState.error}</Alert> : null}
-            {!activeManualCardComplete ? (
+            {!manualState.error && !activeManualCardComplete ? (
               <Alert severity="info">
                 Finish the current card before adding another one.
               </Alert>
@@ -621,7 +640,7 @@ export default function CreatePage({ authUser, onCreated }) {
             <Button
               variant="contained"
               onClick={createTemplate}
-              disabled={manualState.loading || completedManualCards === 0 || hasIncompleteManualCards}
+              disabled={manualState.loading}
             >
               {manualState.loading ? 'Creating...' : 'Create Deck'}
             </Button>
@@ -638,7 +657,7 @@ export default function CreatePage({ authUser, onCreated }) {
               Review and edit the generated deck before saving. You can change the title, description, and flashcards here.
             </Typography>
             {draftState.error ? <Alert severity="error">{draftState.error}</Alert> : null}
-            {!activeDraftCardComplete ? (
+            {!draftState.error && !activeDraftCardComplete ? (
               <Alert severity="info">
                 Finish the current card before adding another one.
               </Alert>
@@ -783,7 +802,7 @@ export default function CreatePage({ authUser, onCreated }) {
             <Button
               variant="contained"
               onClick={handleSaveDraft}
-              disabled={!draft || draftState.saving || !draft.title.trim() || completedDraftCards === 0 || hasIncompleteDraftCards}
+              disabled={!draft || draftState.saving}
             >
               {draftState.saving ? 'Saving...' : 'Save Deck'}
             </Button>
