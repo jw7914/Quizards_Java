@@ -79,7 +79,7 @@ The production deployment model is a single container: Vite builds the frontend 
 The backend owns authentication, persistence, authorization, AI integration, and session generation.
 
 - `quizards.web`
-  - Controllers, request DTOs, response DTOs, and exception mapping
+  - Controllers, exception mapping, and consolidated request/response DTOs in `WebDtos.java`
 - `quizards.service`
   - Business logic for auth, study sets, and study sessions
 - `quizards.persistence`

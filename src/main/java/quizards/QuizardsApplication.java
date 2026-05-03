@@ -3,7 +3,6 @@ package quizards;
 import quizards.ai.AIProperties;
 import quizards.ai.AIService;
 import quizards.ai.GeminiAIService;
-import quizards.ai.StubAIService;
 import quizards.validation.InputValidator;
 import java.util.concurrent.Executor;
 import org.springframework.boot.SpringApplication;
@@ -39,7 +38,7 @@ public class QuizardsApplication {
     @Bean
     AIService aiService(AIProperties aiProperties, Executor aiExecutor) {
         if (!aiProperties.hasGeminiApiKey()) {
-            return new StubAIService();
+            throw new IllegalStateException("Missing Gemini API key. Set GEMINI_API_KEY to enable AI flashcard generation.");
         }
         return new GeminiAIService(aiProperties.gemini().apiKey(), aiExecutor);
     }
