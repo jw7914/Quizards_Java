@@ -73,6 +73,16 @@ public class GeminiAIService implements AIService {
         this.aiExecutor = aiExecutor;
     }
 
+    GeminiAIService(
+            QuizardsTextDeckAssistant textDeckAssistant,
+            QuizardsQuizDeckAssistant quizDeckAssistant,
+            Executor aiExecutor
+    ) {
+        this.textDeckAssistant = textDeckAssistant;
+        this.quizDeckAssistant = quizDeckAssistant;
+        this.aiExecutor = aiExecutor;
+    }
+
     @Override
     public CompletableFuture<GeneratedDeck> generateFlashcardsFromPrompt(String prompt, FlashcardType cardType) {
         return cardType == FlashcardType.QUIZ ? generateQuizDeck(prompt) : generateTextDeck(prompt);
@@ -159,7 +169,7 @@ public class GeminiAIService implements AIService {
         QuizStudySetDraft generate(@V("cardCountInstruction") String cardCountInstruction, @V("prompt") String prompt);
     }
 
-    private String buildCardCountInstruction(Integer requestedCount) {
+    String buildCardCountInstruction(Integer requestedCount) {
         if (requestedCount != null) {
             return "Return exactly %d flashcards. If the student asks for more than %d, return exactly %d flashcards instead."
                     .formatted(requestedCount, ABSOLUTE_MAX_CARD_COUNT, ABSOLUTE_MAX_CARD_COUNT);
@@ -168,7 +178,7 @@ public class GeminiAIService implements AIService {
                 .formatted(DEFAULT_MIN_CARD_COUNT, DEFAULT_MAX_CARD_COUNT);
     }
 
-    private Integer extractRequestedCardCount(String prompt) {
+    Integer extractRequestedCardCount(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             return null;
         }
@@ -191,23 +201,23 @@ public class GeminiAIService implements AIService {
         return null;
     }
 
-    private int clampRequestedCount(int requestedCount) {
+    int clampRequestedCount(int requestedCount) {
         return Math.min(requestedCount, ABSOLUTE_MAX_CARD_COUNT);
     }
 
-    private List<StudyFlashcardDraft> normalizeTextFlashcards(List<StudyFlashcardDraft> flashcards, Integer requestedCount) {
+    List<StudyFlashcardDraft> normalizeTextFlashcards(List<StudyFlashcardDraft> flashcards, Integer requestedCount) {
         int expectedCount = requestedCount == null ? DEFAULT_MAX_CARD_COUNT : requestedCount;
         int minimumCount = requestedCount == null ? DEFAULT_MIN_CARD_COUNT : requestedCount;
         return normalizeFlashcards(flashcards, minimumCount, expectedCount, "flashcards");
     }
 
-    private List<QuizFlashcardDraft> normalizeQuizFlashcards(List<QuizFlashcardDraft> flashcards, Integer requestedCount) {
+    List<QuizFlashcardDraft> normalizeQuizFlashcards(List<QuizFlashcardDraft> flashcards, Integer requestedCount) {
         int expectedCount = requestedCount == null ? DEFAULT_MAX_CARD_COUNT : requestedCount;
         int minimumCount = requestedCount == null ? DEFAULT_MIN_CARD_COUNT : requestedCount;
         return normalizeFlashcards(flashcards, minimumCount, expectedCount, "quiz flashcards");
     }
 
-    private <T> List<T> normalizeFlashcards(List<T> flashcards, int minimumCount, int maximumCount, String label) {
+    <T> List<T> normalizeFlashcards(List<T> flashcards, int minimumCount, int maximumCount, String label) {
         if (flashcards == null || flashcards.isEmpty()) {
             throw new AIProviderException("Gemini returned no " + label + ".");
         }
