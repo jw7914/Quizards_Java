@@ -1,7 +1,7 @@
 package quizards.model;
 
-import quizards.domain.FlashcardType;
-import quizards.domain.Visibility;
+import quizards.model.FlashcardType;
+import quizards.model.Visibility;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

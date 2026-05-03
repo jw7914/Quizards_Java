@@ -7,8 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import quizards.domain.FlashcardType;
-import quizards.domain.Visibility;
+import quizards.model.FlashcardType;
+import quizards.model.Visibility;
 
 class StudySetTest {
 

@@ -12,7 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
-import quizards.domain.FlashcardType;
+import quizards.model.FlashcardType;
 
 @Entity
 @Table(name = "flashcards")

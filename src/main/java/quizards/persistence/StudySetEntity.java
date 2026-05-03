@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
-import quizards.domain.Visibility;
+import quizards.model.Visibility;
 
 @Entity
 @Table(name = "study_sets")

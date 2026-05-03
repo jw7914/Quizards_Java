@@ -2,9 +2,9 @@ package quizards.web;
 
 import java.util.List;
 import java.util.UUID;
-import quizards.domain.FlashcardType;
-import quizards.domain.StudyMode;
-import quizards.domain.Visibility;
+import quizards.model.FlashcardType;
+import quizards.model.StudyMode;
+import quizards.model.Visibility;
 
 record AuthRequest(String username, String password) {
 }

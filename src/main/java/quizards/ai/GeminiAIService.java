@@ -20,7 +20,7 @@ import java.util.concurrent.Executor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import quizards.exception.AIProviderException;
-import quizards.domain.FlashcardType;
+import quizards.model.FlashcardType;
 import quizards.model.Flashcard;
 import quizards.model.QuizFlashcard;
 import quizards.model.TextFlashcard;

@@ -4,7 +4,7 @@ import java.time.Duration;
 import java.util.EnumMap;
 import java.util.Map;
 import org.springframework.stereotype.Service;
-import quizards.domain.StudyMode;
+import quizards.model.StudyMode;
 import quizards.model.StudySet;
 import quizards.study.RepetitionEngine;
 import quizards.study.StreakEngine;

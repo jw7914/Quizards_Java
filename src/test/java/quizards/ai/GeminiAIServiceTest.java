@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
 import java.util.concurrent.CompletionException;
 import org.junit.jupiter.api.Test;
-import quizards.domain.FlashcardType;
+import quizards.model.FlashcardType;
 import quizards.exception.AIProviderException;
 import quizards.model.Flashcard;
 import quizards.model.QuizFlashcard;

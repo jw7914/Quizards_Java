@@ -1,6 +1,6 @@
 package quizards.model;
 
-import quizards.domain.StudyMode;
+import quizards.model.StudyMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

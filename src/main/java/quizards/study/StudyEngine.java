@@ -1,6 +1,6 @@
 package quizards.study;
 
-import quizards.domain.StudyMode;
+import quizards.model.StudyMode;
 import quizards.model.StudySet;
 
 public interface StudyEngine {

@@ -1,6 +1,6 @@
 package quizards.study;
 
-import quizards.domain.StudyMode;
+import quizards.model.StudyMode;
 import quizards.model.Flashcard;
 import java.time.Duration;
 import java.util.List;

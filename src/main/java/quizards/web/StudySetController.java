@@ -2,9 +2,9 @@ package quizards.web;
 
 import quizards.ai.AIService;
 import quizards.ai.GeneratedDeck;
-import quizards.domain.FlashcardType;
-import quizards.domain.StudyMode;
-import quizards.domain.Visibility;
+import quizards.model.FlashcardType;
+import quizards.model.StudyMode;
+import quizards.model.Visibility;
 import quizards.model.Flashcard;
 import quizards.model.QuizFlashcard;
 import quizards.model.StudySet;

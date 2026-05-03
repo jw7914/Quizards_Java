@@ -1,7 +1,7 @@
 package quizards.ai;
 
 import java.util.concurrent.CompletableFuture;
-import quizards.domain.FlashcardType;
+import quizards.model.FlashcardType;
 
 public interface AIService {
 

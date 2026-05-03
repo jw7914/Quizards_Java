@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import quizards.domain.Visibility;
+import quizards.model.Visibility;
 import quizards.persistence.StudySetEntity;
 
 public interface StudySetRepository extends JpaRepository<StudySetEntity, UUID> {

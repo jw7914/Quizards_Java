@@ -1,8 +1,9 @@
 package quizards.service;
 
-import quizards.domain.Visibility;
+import quizards.model.Visibility;
 import quizards.exception.AccessDeniedException;
 import quizards.model.Flashcard;
+import quizards.model.FlashcardType;
 import quizards.model.QuizFlashcard;
 import quizards.model.StudySet;
 import quizards.model.TextFlashcard;
@@ -205,7 +206,7 @@ public class StudySetService {
         );
         entity.getFlashcards().forEach(card -> {
                     Flashcard flashcard;
-                    if (card.getType() == quizards.domain.FlashcardType.QUIZ) {
+                    if (card.getType() == FlashcardType.QUIZ) {
                         flashcard = new QuizFlashcard(
                                 card.getId(),
                                 card.getPrompt(),

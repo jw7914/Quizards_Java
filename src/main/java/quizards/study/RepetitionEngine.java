@@ -1,6 +1,6 @@
 package quizards.study;
 
-import quizards.domain.StudyMode;
+import quizards.model.StudyMode;
 import quizards.exception.EmptyDeckException;
 import quizards.model.StudySet;
 import java.time.Duration;

@@ -1,6 +1,6 @@
 package quizards.model;
 
-import quizards.domain.FlashcardType;
+import quizards.model.FlashcardType;
 import java.util.Objects;
 import java.util.UUID;
 

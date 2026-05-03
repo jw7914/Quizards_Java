@@ -1,4 +1,4 @@
-package quizards.domain;
+package quizards.model;
 
 public enum StudyMode {
     REPETITION,
