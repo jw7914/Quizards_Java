@@ -5,5 +5,5 @@ import quizards.domain.FlashcardType;
 
 public interface AIService {
 
-    CompletableFuture<GeneratedDeck> generateFlashcardsFromPrompt(String prompt, FlashcardType cardType);
+    CompletableFuture<GeneratedDeck> generateStudySetFromPrompt(String prompt, FlashcardType cardType);
 }

@@ -74,7 +74,7 @@ class GeminiAIServiceTest {
                 Runnable::run
         );
 
-        GeneratedDeck result = service.generateFlashcardsFromPrompt("Make a cell biology deck.", FlashcardType.TEXT).join();
+        GeneratedDeck result = service.generateStudySetFromPrompt("Make a cell biology deck.", FlashcardType.TEXT).join();
 
         assertEquals("Cell Biology", result.title());
         assertEquals(8, result.flashcards().size());
@@ -119,7 +119,7 @@ class GeminiAIServiceTest {
                 Runnable::run
         );
 
-        GeneratedDeck result = service.generateFlashcardsFromPrompt("Generate 3 quiz cards about US state capitals.", FlashcardType.QUIZ).join();
+        GeneratedDeck result = service.generateStudySetFromPrompt("Generate 3 quiz cards about US state capitals.", FlashcardType.QUIZ).join();
 
         assertEquals(3, result.flashcards().size());
         Flashcard flashcard = result.flashcards().get(0);
@@ -149,7 +149,7 @@ class GeminiAIServiceTest {
 
         CompletionException exception = assertThrows(
                 CompletionException.class,
-                () -> service.generateFlashcardsFromPrompt("Explain osmosis.", FlashcardType.TEXT).join()
+                () -> service.generateStudySetFromPrompt("Explain osmosis.", FlashcardType.TEXT).join()
         );
 
         AIProviderException cause = assertInstanceOf(AIProviderException.class, exception.getCause());
@@ -172,7 +172,7 @@ class GeminiAIServiceTest {
 
         CompletionException exception = assertThrows(
                 CompletionException.class,
-                () -> service.generateFlashcardsFromPrompt("Explain osmosis.", FlashcardType.TEXT).join()
+                () -> service.generateStudySetFromPrompt("Explain osmosis.", FlashcardType.TEXT).join()
         );
 
         AIProviderException cause = assertInstanceOf(AIProviderException.class, exception.getCause());

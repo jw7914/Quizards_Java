@@ -84,7 +84,7 @@ public class GeminiAIService implements AIService {
     }
 
     @Override
-    public CompletableFuture<GeneratedDeck> generateFlashcardsFromPrompt(String prompt, FlashcardType cardType) {
+    public CompletableFuture<GeneratedDeck> generateStudySetFromPrompt(String prompt, FlashcardType cardType) {
         return cardType == FlashcardType.QUIZ ? generateQuizDeck(prompt) : generateTextDeck(prompt);
     }
 

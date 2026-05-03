@@ -156,7 +156,7 @@ public class StudySetController {
             Authentication authentication
     ) {
         requireOwner(authentication);
-        return aiService.generateFlashcardsFromPrompt(
+        return aiService.generateStudySetFromPrompt(
                         request.prompt(),
                         request.cardType() == null ? FlashcardType.TEXT : request.cardType()
                 )
