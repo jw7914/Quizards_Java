@@ -17,6 +17,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -82,6 +86,26 @@ public class StudySetController {
         }
         StudySet studySet = studySetService.getAccessibleStudySet(studySetId, userId);
         return toDetailResponse(studySet);
+    }
+
+    @GetMapping(value = "/study-sets/{studySetId}/download", produces = MediaType.TEXT_PLAIN_VALUE)
+    public ResponseEntity<String> downloadStudySet(@PathVariable UUID studySetId, Authentication authentication) {
+        long userId = -1L;
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getName())) {
+            userId = requireOwner(authentication).getId();
+        }
+
+        StudySet studySet = studySetService.getAccessibleStudySet(studySetId, userId);
+        String body = formatStudySetAsText(studySet);
+        String filename = buildDownloadFilename(studySet);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(filename).build().toString()
+                )
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(body);
     }
 
     @GetMapping("/study-sets/{studySetId}/study-session")
@@ -321,5 +345,31 @@ public class StudySetController {
                 card.prompt(),
                 card.answer()
         );
+    }
+
+    private String formatStudySetAsText(StudySet studySet) {
+        return studySet.getCards().stream()
+                .map(card -> "%d. %s: %s".formatted(
+                        studySet.getCards().indexOf(card) + 1,
+                        card.getPrompt(),
+                        card.getAnswer()
+                ))
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    private String buildDownloadFilename(StudySet studySet) {
+        String normalizedTitle = studySet.getTitle() == null
+                ? "study-set"
+                : studySet.getTitle()
+                        .trim()
+                        .toLowerCase()
+                        .replaceAll("[^a-z0-9]+", "-")
+                        .replaceAll("(^-+|-+$)", "");
+
+        if (normalizedTitle.isBlank()) {
+            normalizedTitle = "study-set";
+        }
+
+        return normalizedTitle + ".txt";
     }
 }

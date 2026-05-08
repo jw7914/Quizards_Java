@@ -70,6 +70,35 @@ export async function fetchStudySetDetail(studySetId) {
   return request(`/api/study-sets/${studySetId}`)
 }
 
+export async function downloadStudySetTxt(studySetId) {
+  const response = await fetch(`/api/study-sets/${studySetId}/download`, {
+    credentials: 'include',
+  })
+
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type') ?? ''
+    const payload = contentType.includes('application/json') ? await response.json() : await response.text()
+
+    if (payload && typeof payload === 'object' && 'error' in payload) {
+      const details =
+        typeof payload.details === 'string' && payload.details.trim().length > 0
+          ? ` ${payload.details}`
+          : ''
+      throw new Error(`${payload.error}${details}`)
+    }
+
+    throw new Error(typeof payload === 'string' ? payload : 'Unable to download study set.')
+  }
+
+  const blob = await response.blob()
+  const contentDisposition = response.headers.get('content-disposition') ?? ''
+  const match = contentDisposition.match(/filename="?([^"]+)"?/)
+  return {
+    blob,
+    filename: match?.[1] ?? `study-set-${studySetId}.txt`,
+  }
+}
+
 export async function fetchStudySession(studySetId, mode, options = {}) {
   const params = new URLSearchParams()
   if (mode) {

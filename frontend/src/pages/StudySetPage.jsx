@@ -26,6 +26,7 @@ import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded'
 import AutoAwesomeRounded from '@mui/icons-material/AutoAwesomeRounded'
 import CollectionsBookmarkRounded from '@mui/icons-material/CollectionsBookmarkRounded'
 import DeleteOutlineRounded from '@mui/icons-material/DeleteOutlineRounded'
+import DownloadRounded from '@mui/icons-material/DownloadRounded'
 import IosShareRounded from '@mui/icons-material/IosShareRounded'
 import LockOutlined from '@mui/icons-material/LockOutlined'
 import PublicRounded from '@mui/icons-material/PublicRounded'
@@ -34,7 +35,7 @@ import VisibilityOffOutlined from '@mui/icons-material/VisibilityOffOutlined'
 import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined'
 import SectionHeading from '../components/SectionHeading'
 import { aiGeneratedChipSx, studySetMetaChipSx, visibilityIconChipSx } from '../components/studySetChipStyles'
-import { fetchStudySession, fetchStudySetDetail, updateStudySet } from '../api'
+import { downloadStudySetTxt, fetchStudySession, fetchStudySetDetail, updateStudySet } from '../api'
 
 const STUDY_MODES = [
   { value: 'REPETITION', label: 'Repetition' },
@@ -129,6 +130,7 @@ export default function StudySetPage({ authUser }) {
   const [timedMinutes, setTimedMinutes] = useState('10')
   const [selectedChoice, setSelectedChoice] = useState('')
   const [shareMessage, setShareMessage] = useState('')
+  const [downloadState, setDownloadState] = useState({ downloading: false, error: '' })
   const [revealedCards, setRevealedCards] = useState({})
   const [editOpen, setEditOpen] = useState(false)
   const [editCardPage, setEditCardPage] = useState(0)
@@ -442,6 +444,29 @@ export default function StudySetPage({ authUser }) {
     }
   }
 
+  const handleDownload = async () => {
+    if (typeof window === 'undefined' || downloadState.downloading) {
+      return
+    }
+
+    setDownloadState({ downloading: true, error: '' })
+
+    try {
+      const { blob, filename } = await downloadStudySetTxt(studySetId)
+      const objectUrl = window.URL.createObjectURL(blob)
+      const link = window.document.createElement('a')
+      link.href = objectUrl
+      link.download = filename
+      window.document.body.appendChild(link)
+      link.click()
+      link.remove()
+      window.URL.revokeObjectURL(objectUrl)
+      setDownloadState({ downloading: false, error: '' })
+    } catch (downloadError) {
+      setDownloadState({ downloading: false, error: downloadError.message })
+    }
+  }
+
   const toggleCardReveal = (cardKey) => {
     setRevealedCards((current) => ({
       ...current,
@@ -654,6 +679,16 @@ export default function StudySetPage({ authUser }) {
                   Edit Deck
                 </Button>
               ) : null}
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<DownloadRounded />}
+                onClick={handleDownload}
+                disabled={downloadState.downloading}
+                sx={{ alignSelf: { xs: 'stretch', lg: 'flex-start' }, flexShrink: 0 }}
+              >
+                {downloadState.downloading ? 'Downloading...' : 'Download .txt'}
+              </Button>
               {studySet.visibility === 'PUBLIC' ? (
                 <Button
                   variant="outlined"
@@ -694,6 +729,12 @@ export default function StudySetPage({ authUser }) {
       {shareMessage ? (
         <Alert severity="success" onClose={() => setShareMessage('')}>
           {shareMessage}
+        </Alert>
+      ) : null}
+
+      {downloadState.error ? (
+        <Alert severity="error" onClose={() => setDownloadState((current) => ({ ...current, error: '' }))}>
+          {downloadState.error}
         </Alert>
       ) : null}
 
