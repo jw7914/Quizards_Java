@@ -679,16 +679,6 @@ export default function StudySetPage({ authUser }) {
                   Edit Deck
                 </Button>
               ) : null}
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<DownloadRounded />}
-                onClick={handleDownload}
-                disabled={downloadState.downloading}
-                sx={{ alignSelf: { xs: 'stretch', lg: 'flex-start' }, flexShrink: 0 }}
-              >
-                {downloadState.downloading ? 'Downloading...' : 'Download .txt'}
-              </Button>
               {studySet.visibility === 'PUBLIC' ? (
                 <Button
                   variant="outlined"
@@ -1137,13 +1127,27 @@ export default function StudySetPage({ authUser }) {
                 <Typography color="text.secondary">
                   {flashcards.length} cards in this deck
                 </Typography>
-                <Button
-                  variant="outlined"
-                  onClick={handleToggleRevealAll}
-                  sx={{ alignSelf: { xs: 'flex-start', md: 'flex-end' } }}
-                >
-                  {allCardsRevealed ? 'Hide all answers' : 'Reveal all answers'}
-                </Button>
+                <Stack direction="row" spacing={1} alignItems="center" sx={{ alignSelf: { xs: 'flex-start', md: 'flex-end' } }}>
+                  <Button
+                    variant="outlined"
+                    onClick={handleToggleRevealAll}
+                  >
+                    {allCardsRevealed ? 'Hide all answers' : 'Reveal all answers'}
+                  </Button>
+                  <Tooltip title={downloadState.downloading ? 'Downloading study set' : 'Download as .txt'}>
+                    <span>
+                      <IconButton
+                        color="primary"
+                        onClick={handleDownload}
+                        disabled={downloadState.downloading}
+                        aria-label="Download study set as text file"
+                        sx={{ border: '1px solid', borderColor: 'divider' }}
+                      >
+                        <DownloadRounded />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                </Stack>
               </Stack>
             ) : null}
           </Stack>

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -348,12 +349,15 @@ public class StudySetController {
     }
 
     private String formatStudySetAsText(StudySet studySet) {
-        return studySet.getCards().stream()
-                .map(card -> "%d. %s: %s".formatted(
-                        studySet.getCards().indexOf(card) + 1,
-                        card.getPrompt(),
-                        card.getAnswer()
-                ))
+        List<Flashcard> cards = studySet.getCards();
+        return IntStream.range(0, cards.size())
+                .mapToObj(index -> {
+                    Flashcard card = cards.get(index);
+                    return """
+                            %d) Q: %s
+                            A: %s
+                            """.formatted(index + 1, card.getPrompt(), card.getAnswer());
+                })
                 .collect(Collectors.joining(System.lineSeparator()));
     }
 
