@@ -1128,12 +1128,6 @@ export default function StudySetPage({ authUser }) {
                   {flashcards.length} cards in this deck
                 </Typography>
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ alignSelf: { xs: 'flex-start', md: 'flex-end' } }}>
-                  <Button
-                    variant="outlined"
-                    onClick={handleToggleRevealAll}
-                  >
-                    {allCardsRevealed ? 'Hide all answers' : 'Reveal all answers'}
-                  </Button>
                   <Tooltip title={downloadState.downloading ? 'Downloading study set' : 'Download as .txt'}>
                     <span>
                       <IconButton
@@ -1141,12 +1135,24 @@ export default function StudySetPage({ authUser }) {
                         onClick={handleDownload}
                         disabled={downloadState.downloading}
                         aria-label="Download study set as text file"
-                        sx={{ border: '1px solid', borderColor: 'divider' }}
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 2,
+                          width: 40,
+                          height: 40,
+                        }}
                       >
                         <DownloadRounded />
                       </IconButton>
                     </span>
                   </Tooltip>
+                  <Button
+                    variant="outlined"
+                    onClick={handleToggleRevealAll}
+                  >
+                    {allCardsRevealed ? 'Hide all answers' : 'Reveal all answers'}
+                  </Button>
                 </Stack>
               </Stack>
             ) : null}
